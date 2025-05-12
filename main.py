@@ -1,6 +1,6 @@
 import sys
 import os
-from PyQt5.QtCore import QPropertyAnimation, pyqtProperty, QEasingCurve, Qt, QTimer
+from PyQt5.QtCore import QPropertyAnimation, pyqtProperty, QEasingCurve, Qt, QTimer, QRect
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -18,16 +18,31 @@ from PyQt5.QtGui import QPixmap, QPen, QColor, QPainter
 from PyQt5.QtGui import QFontDatabase, QFont
 import numpy as np
 from scipy.spatial import Voronoi
-import random
+from datetime import date, timedelta
 
 
 class StatisticsChart(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, start_date=None, title_label=None):
         super().__init__(parent)
         self.setMinimumSize(1200, 650)
         self.setStyleSheet("background: transparent;")
-        # Example data: 7 days, values from 0 (MUY MAL) to 4 (MUY BIEN)
-        self.data = [2, 3, 4, 2, 4, 1, 2]  # Example values for each day
+        self.data = [2, 3, 4, 2, 4, 1, 2, 3, 2, 1, 3, 4, 2, 2, 3, 1, 2, 4, 3, 2, 1, 2, 3, 4, 2, 1, 3, 2]
+        self.window_size = 7
+        self.window_start = 0
+        self.num_windows = (len(self.data) + self.window_size - 1) // self.window_size
+        self._drag_start_x = None
+        self.start_date = start_date or date(2024, 4, 1)  # Default: April 1, 2024
+        self.title_label = title_label
+        self.update_title()
+
+    def update_title(self):
+        # Calculate the date range for the current window
+        start = self.start_date + timedelta(days=self.window_start)
+        end = self.start_date + timedelta(days=min(self.window_start + self.window_size - 1, len(self.data) - 1))
+        months = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+        title = f"MEDIA DIARIA ({start.day} - {end.day}, {months[end.month-1]})"
+        if self.title_label:
+            self.title_label.setText(title)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -58,10 +73,11 @@ class StatisticsChart(QWidget):
             painter.setFont(QFont("Jost", 24))
             painter.drawText(20, int(y) + 10, label)
 
-        # Draw line and dots
+        # Draw line and dots for visible window
         points = []
-        for i, value in enumerate(self.data):
-            x = left + i * (w - left - right) / 6
+        visible_data = self.data[self.window_start:self.window_start + self.window_size]
+        for i, value in enumerate(visible_data):
+            x = left + i * (w - left - right) / (self.window_size - 1)
             y = top + (4 - value) * (h - top - bottom) / 4
             points.append((x, y))
         painter.setPen(line_pen)
@@ -76,21 +92,59 @@ class StatisticsChart(QWidget):
         painter.setPen(QColor(255, 255, 255))
         painter.setFont(QFont("Jost", 32))
         for i, day in enumerate(days):
-            x = left + i * (w - left - right) / 6
-            painter.drawText(int(x) - 16, h - 80, 32, 40, Qt.AlignCenter, day)
+            x = left + i * (w - left - right) / (self.window_size - 1)
+            painter.drawText(int(x) - 16, h - 100, 32, 40, Qt.AlignCenter, day)
 
-        # Draw navigation dots
-        dot_y = h - 30
-        dot_x0 = w // 2 - 45
-        for i in range(4):
-            if i == 0:
+        # Draw navigation dots (and store clickable areas)
+        self.dot_rects = []
+        dot_y = h - 50
+        dot_x0 = w // 2 - (self.num_windows * 15)
+        for i in range(self.num_windows):
+            rect = QRect(dot_x0 + i * 30, dot_y, 16, 16)
+            self.dot_rects.append(rect)
+            if i == self.window_start // self.window_size:
                 painter.setBrush(QColor(255, 255, 255))
                 painter.setPen(Qt.NoPen)
-                painter.drawEllipse(dot_x0 + i * 30, dot_y, 16, 16)
+                painter.drawEllipse(rect)
             else:
                 painter.setBrush(Qt.NoBrush)
                 painter.setPen(QPen(QColor(255, 255, 255), 2))
-                painter.drawEllipse(dot_x0 + i * 30, dot_y, 16, 16)
+                painter.drawEllipse(rect)
+
+    def scroll_left(self):
+        if self.window_start - self.window_size >= 0:
+            self.window_start -= self.window_size
+            self.update()
+            self.update_title()
+
+    def scroll_right(self):
+        if self.window_start + self.window_size < len(self.data):
+            self.window_start += self.window_size
+            self.update()
+            self.update_title()
+
+    def mousePressEvent(self, event):
+        self._drag_start_x = event.x()
+        for i, rect in enumerate(getattr(self, 'dot_rects', [])):
+            if rect.contains(event.pos()):
+                self.window_start = i * self.window_size
+                self.update()
+                self.update_title()
+                return
+
+    def mouseMoveEvent(self, event):
+        if self._drag_start_x is not None:
+            dx = event.x() - self._drag_start_x
+            threshold = 60
+            if dx > threshold:
+                self.scroll_left()
+                self._drag_start_x = event.x()
+            elif dx < -threshold:
+                self.scroll_right()
+                self._drag_start_x = event.x()
+
+    def mouseReleaseEvent(self, event):
+        self._drag_start_x = None
 
 class VoronoiWidget(QWidget):
     def __init__(self, parent=None, r=255, g=255, b=255):
@@ -792,27 +846,43 @@ class MainScreen(QMainWindow):
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Title
-        title = QLabel("MEDIA DIARIA (21 - 27, ABR)")
+        # Title label (will be updated by the chart)
+        title = QLabel()
         title.setStyleSheet("color: white; font-size: 48px; font-family: 'Jost';")
         title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         layout.addWidget(title)
         layout.addSpacing(10)
 
-        # Chart
-        chart = StatisticsChart()
+        # Pass the label and start date to the chart
+        chart = StatisticsChart(title_label=title, start_date=date(2024, 4, 1))  # Set your real start date here
         layout.addWidget(chart)
 
-        # Back button (optional)
-        button = QPushButton("VOLVER")
-        button.setStyleSheet("background-color: #000; color: white; font-size: 40px; font-family: 'Jost'; font-weight: 150;")
-        layout.addWidget(button, alignment=Qt.AlignCenter)
+        # Cross button at top right
+        cross_btn = QPushButton("✕")
+        cross_btn.setFixedSize(80, 80)
+        cross_btn.setStyleSheet("""
+            QPushButton {
+                color: white;
+                font-size: 48px;
+                font-family: 'Jost';
+                background: transparent;
+                border: none;
+            }
+            QPushButton:hover {
+                color: orange;
+            }
+        """)
+        # Place cross at top right using a horizontal layout
+        cross_layout = QHBoxLayout()
+        cross_layout.addStretch()
+        cross_layout.addWidget(cross_btn)
+        layout.insertLayout(0, cross_layout)
 
         fade_widget = FadeWidget(widget)
         self.stack.addWidget(fade_widget)
         self.fade_widgets.append(fade_widget)
 
-        button.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
+        cross_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
     def _start_auto_timer_for_current(self):
         current_widget = self.fade_widgets[self.current]
         if getattr(current_widget, "auto", False):
