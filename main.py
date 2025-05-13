@@ -1,6 +1,6 @@
 import sys
 import os
-from PyQt5.QtCore import QPropertyAnimation, pyqtProperty, QEasingCurve, Qt, QTimer, QRect
+from PyQt5.QtCore import QPropertyAnimation, pyqtProperty, QEasingCurve, Qt, QTimer, QRect, pyqtSignal
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -22,6 +22,7 @@ from datetime import date, timedelta
 
 
 class StatisticsChart(QWidget):
+    day_clicked = pyqtSignal(int)  # index in self.data
     def __init__(self, parent=None, start_date=None, title_label=None):
         super().__init__(parent)
         self.setMinimumSize(1200, 650)
@@ -125,11 +126,26 @@ class StatisticsChart(QWidget):
 
     def mousePressEvent(self, event):
         self._drag_start_x = event.x()
+        # Check if a dot was clicked
         for i, rect in enumerate(getattr(self, 'dot_rects', [])):
             if rect.contains(event.pos()):
                 self.window_start = i * self.window_size
                 self.update()
                 self.update_title()
+                return
+        # Check if a day was clicked
+        left = 120
+        right = 40
+        w = self.width()
+        x_positions = [
+            left + i * (w - left - right) / (self.window_size - 1)
+            for i in range(self.window_size)
+        ]
+        for i, x in enumerate(x_positions):
+            if abs(event.x() - x) < 30:  # 30px tolerance
+                global_idx = self.window_start + i
+                if global_idx < len(self.data):
+                    self.day_clicked.emit(global_idx)
                 return
 
     def mouseMoveEvent(self, event):
@@ -147,13 +163,13 @@ class StatisticsChart(QWidget):
         self._drag_start_x = None
 
 class VoronoiWidget(QWidget):
-    def __init__(self, parent=None, r=255, g=255, b=255):
-        self.r = r
-        self.g = g
-        self.b = b
+    def __init__(self, parent=None):
+        self.r = 217
+        self.g = 134
+        self.b = 86
         super().__init__(parent)
         self.setStyleSheet("background-color: #000000;")
-        self.setFixedSize(1750, 800)
+        self.setFixedSize(1920, 800)
         
         # Initialize data structures
         self.points = []
@@ -164,10 +180,11 @@ class VoronoiWidget(QWidget):
         self.visited_vertices = set()
         self.edges_to_add = []  # Added edges_to_add list
         self.vor = None
+        self.edges_per_tick = 500
         
         # Generate random points
-        num_points = 100
-        margin = 100
+        num_points = 10000
+        margin = 0
         width = self.width()
         height = self.height()
         
@@ -214,11 +231,11 @@ class VoronoiWidget(QWidget):
                     self.edges_to_add.append(edge)
 
     def add_edge(self):
-        """Add one edge at a time"""
-        if self.edges_to_add:
+        """Add multiple edges at a time for faster animation"""
+        count = 0
+        while self.edges_to_add and count < self.edges_per_tick:
             edge = self.edges_to_add.pop(0)
             self.shown_edges.add(edge)
-            
             # Add connected edges
             if edge in self.edge_lookup:
                 for v1, v2, _ in self.edge_lookup[edge]:
@@ -228,9 +245,9 @@ class VoronoiWidget(QWidget):
                     if v2 not in self.visited_vertices:
                         self.visited_vertices.add(v2)
                         self.add_adjacent_edges(v2)
-            
-            self.update()
-        else:
+            count += 1
+        self.update()
+        if not self.edges_to_add:
             self.timer.stop()
 
     def paintEvent(self, event):
@@ -279,12 +296,6 @@ class FadeWidget(QWidget):
 
     opacity = pyqtProperty(float, get_opacity, set_opacity)
 
-# ...existing imports...
-
-# ...existing imports...
-
-# ...existing imports...
-
 class MainScreen(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -318,6 +329,7 @@ class MainScreen(QMainWindow):
         self.create_cause_emotion_widget(next_widget_index=8) #7
         self.create_send_to_contacts_widget(next_widget_index_no=0, next_widget_index_si=0) #8
         self.create_statistics_widget(next_widget_index=2) #9
+       # self.create_day_details_widget(next_widget_index=9) #10
         
 
 
@@ -514,7 +526,7 @@ class MainScreen(QMainWindow):
         voronoi_label.setFixedSize(1800, 800)
         layout.addWidget(voronoi_label)
 
-        voronoi = VoronoiWidget(r=255, g=255, b=0)
+        voronoi = VoronoiWidget()
 
         # --- Overlay text container ---
         text_container = QWidget(voronoi_label)
@@ -634,16 +646,17 @@ class MainScreen(QMainWindow):
         grid.setVerticalSpacing(10)
         grid.setContentsMargins(20, 10, 20, 10)
 
-        self.selected_emotion = None
+        self.selected_emotion = set()
         self.emotion_buttons = []
 
         def on_emotion_clicked(word, btn):
             # Deselect all
-            for b in self.emotion_buttons:
-                b.setStyleSheet("color: white; font-size: 30px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
-            # Select this one
-            btn.setStyleSheet("color: orange; font-size: 30px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none; text-decoration: underline;")
-            self.selected_emotion = word
+            if word in self.selected_emotion:
+                self.selected_emotion.remove(word)
+                btn.setStyleSheet("color: white; font-size: 30px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+            else:
+                self.selected_emotion.add(word)
+                btn.setStyleSheet("color: orange; font-size: 30px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none; text-decoration: underline;")
 
         for row, row_words in enumerate(emotions):
             for col, word in enumerate(row_words):
@@ -846,15 +859,13 @@ class MainScreen(QMainWindow):
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Title label (will be updated by the chart)
         title = QLabel()
         title.setStyleSheet("color: white; font-size: 48px; font-family: 'Jost';")
         title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         layout.addWidget(title)
         layout.addSpacing(10)
 
-        # Pass the label and start date to the chart
-        chart = StatisticsChart(title_label=title, start_date=date(2024, 4, 1))  # Set your real start date here
+        chart = StatisticsChart(title_label=title, start_date=date(2024, 4, 1))
         layout.addWidget(chart)
 
         # Cross button at top right
@@ -872,7 +883,6 @@ class MainScreen(QMainWindow):
                 color: orange;
             }
         """)
-        # Place cross at top right using a horizontal layout
         cross_layout = QHBoxLayout()
         cross_layout.addStretch()
         cross_layout.addWidget(cross_btn)
@@ -883,6 +893,89 @@ class MainScreen(QMainWindow):
         self.fade_widgets.append(fade_widget)
 
         cross_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
+
+        # Example day data for demo
+        def get_day_data(day_idx):
+            # Replace with your real data lookup
+
+            return {
+                "date": "19 / 04 / 2025",
+                "entries": [
+                    {"time": "10:45", "mood": "BIEN", "emociones": ["TRANQUILIDAD"], "motivos": ["FIESTA"]},
+                    {"time": "12:00", "mood": "NORMAL", "emociones": ["APATÍA"], "motivos": ["TRABAJO"]},
+                ]
+            }
+
+        def show_day_details(day_idx):
+            day_data = get_day_data(day_idx)
+            details_widget = self.create_day_details_widget(day_data, next_widget_index=self.fade_widgets.index(fade_widget))
+            self.fade_to(self.current, self.fade_widgets.index(details_widget))
+
+        chart.day_clicked.connect(show_day_details)
+    def create_day_details_widget(self, day_data, next_widget_index):
+        widget = QWidget()
+        widget.setStyleSheet("background-color: #000000;")
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(80, 80, 80, 80)
+
+        # Date at top
+        date_label = QLabel(day_data["date"])
+        date_label.setStyleSheet("color: #888; font-size: 48px; font-family: 'Jost'; font-weight: 200;")
+        layout.addWidget(date_label)
+        layout.addSpacing(30)
+
+        for entry in day_data["entries"]:
+            # Time and mood
+            time_label = QLabel(f"{entry['time']} {entry['mood']}")
+            time_label.setStyleSheet("color: white; font-size: 38px; font-family: 'Jost'; font-weight: 200;")
+            layout.addWidget(time_label)
+            # Divider
+            divider = QFrame()
+            divider.setFrameShape(QFrame.HLine)
+            divider.setStyleSheet("background-color: #222;")
+            divider.setFixedHeight(2)
+            layout.addWidget(divider)
+            # Emociones
+            emociones_label = QLabel(f"EMOCIONES: <span style='color:#888'>{' - '.join(entry['emociones'])}</span>")
+            emociones_label.setStyleSheet("color: white; font-size: 32px; font-family: 'Jost'; font-weight: 200;")
+            emociones_label.setTextFormat(Qt.RichText)
+            layout.addWidget(emociones_label)
+            # Motivos
+            motivos_label = QLabel(f"MOTIVOS: <span style='color:#888'>{' - '.join(entry['motivos'])}</span>")
+            motivos_label.setStyleSheet("color: white; font-size: 32px; font-family: 'Jost'; font-weight: 200;")
+            motivos_label.setTextFormat(Qt.RichText)
+            layout.addWidget(motivos_label)
+            layout.addSpacing(40)
+
+        layout.addStretch()
+
+        # Cross button at top right
+        cross_btn = QPushButton("✕")
+        cross_btn.setFixedSize(80, 80)
+        cross_btn.setStyleSheet("""
+            QPushButton {
+                color: white;
+                font-size: 48px;
+                font-family: 'Jost';
+                background: transparent;
+                border: none;
+            }
+            QPushButton:hover {
+                color: orange;
+            }
+        """)
+        cross_layout = QHBoxLayout()
+        cross_layout.addStretch()
+        cross_layout.addWidget(cross_btn)
+        layout.insertLayout(0, cross_layout)
+
+        fade_widget = FadeWidget(widget)
+        self.stack.addWidget(fade_widget)
+        self.fade_widgets.append(fade_widget)
+
+        cross_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
+        return fade_widget
+    
     def _start_auto_timer_for_current(self):
         current_widget = self.fade_widgets[self.current]
         if getattr(current_widget, "auto", False):
