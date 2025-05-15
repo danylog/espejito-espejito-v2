@@ -307,8 +307,8 @@ class MainScreen(QMainWindow):
         self.repaint()  # Force update
 
         # Get the real fullscreen size
-        self.screen_width = self.screen().geometry().width()
-        self.screen_height = self.screen().geometry().height()
+        self.screen_width = 1920
+        self.screen_height = 1080
         print(f"Screen size: {self.screen_width}x{self.screen_height}")
 
         self.current = 0
