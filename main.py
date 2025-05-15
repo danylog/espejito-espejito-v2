@@ -19,6 +19,7 @@ from PyQt5.QtGui import QFontDatabase, QFont
 import numpy as np
 from scipy.spatial import Voronoi
 from datetime import date, timedelta
+os.environ["QT_QPA_PLATFORMTHEME"] = "fusion"
 
 
 class StatisticsChart(QWidget):
