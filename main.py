@@ -300,7 +300,10 @@ class MainScreen(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Decentralized Widget Demo")
-        self.setGeometry(100, 100, 1920, 1080)
+        # Make window full screen and windowless
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.showFullScreen()
+        # self.setGeometry(100, 100, 1920, 1080)  # Remove this line, not needed in fullscreen
 
         self.current = 0  # Start with the first widget
 
