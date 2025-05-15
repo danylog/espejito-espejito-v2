@@ -259,7 +259,7 @@ class VoronoiWidget(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         
         edge_pen = QPen(QColor(self.r, self.g, self.b))
-        edge_pen.setWidth(0.5)
+        edge_pen.setWidth(1)
         painter.setPen(edge_pen)
         
         for (x1, y1), (x2, y2) in self.shown_edges:

@@ -15,74 +15,59 @@ class CameraFacialEmotionDetector:
         )
         self.model.eval()  # Set model to evaluation mode
         
-        # Define emotion mapping for the model
+        # Only keep mapping for Happy, Neutral, Sad
         self.emotion_mapping = {
-            0: 'Surprise',
-            1: 'Angry',
             2: 'Happy',
-            3: 'Neutral',
-            4: 'Sad',
-            5: 'Surprise'
+            3: 'Normal',
+            4: 'Sad'
         }
+        self.target_indices = [2, 3, 4]
         
         # Load the Haar cascade for face detection
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
     def detect_faces(self, frame: cv2.Mat) -> List[Dict[str, int]]:
-        """
-        Detect faces in a video frame using Haar cascades.
-        Args:
-            frame (cv2.Mat): A single frame from the video
-        
-        Returns:
-            List[Dict[str, int]]: List of bounding boxes for detected faces
-        """
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=3, minSize=(48, 48))
         return [{'x': x, 'y': y, 'w': w, 'h': h} for (x, y, w, h) in faces]
 
     def process_face(self, face_roi: cv2.Mat) -> Dict:
-        """
-        Predict emotions for a cropped face.
-        Args:
-            face_roi (cv2.Mat): Cropped image of a face
-        
-        Returns:
-            Dict: Predicted top emotion and scores for all emotions
-        """
-        # Resize face to match model's input size
         face_resized = cv2.resize(face_roi, (224, 224))
         face_rgb = cv2.cvtColor(face_resized, cv2.COLOR_BGR2RGB)
-        
-        # Convert to tensor
         inputs = self.processor(images=[face_rgb], return_tensors="pt")
-        
-        # Perform inference
         with torch.no_grad():
             outputs = self.model(**inputs)
             probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
         
-        # Get the top prediction
-        predicted_class = probs.argmax().item()
-        confidence = probs[0][predicted_class].item()
-        
-        # Map predictions to emotions
-        predictions = [
-            {'emotion': self.emotion_mapping[i], 'confidence': prob.item()}
-            for i, prob in enumerate(probs[0])
-        ]
-        predictions.sort(key=lambda x: x['confidence'], reverse=True)
-        
+        # Only consider Happy, Normal, Sad
+        filtered_probs = probs[0][self.target_indices]
+        filtered_probs = filtered_probs / filtered_probs.sum()  # Normalize to sum to 1
+
+        happy = filtered_probs[0].item()
+        normal = filtered_probs[1].item()
+        sad = filtered_probs[2].item()
+
         return {
-            'top_emotion': self.emotion_mapping[predicted_class],
-            'confidence': confidence,
-            'all_emotions': predictions
+            'Happy': happy,
+            'Normal': normal,
+            'Sad': sad
         }
 
+    def classify_mood(self, happy, normal, sad):
+        # Use the difference between happy and sad to classify
+        diff = happy - sad
+        if diff >= 0.4:
+            return "MUY FELIZ"
+        elif diff >= 0.15:
+            return "FELIZ"
+        elif diff > -0.15:
+            return "NORMAL"
+        elif diff > -0.4:
+            return "TRISTE"
+        else:
+            return "MUY TRISTE"
+
     def analyze_camera_feed(self):
-        """
-        Analyze video frames from the camera and output detected emotions.
-        """
         cap = cv2.VideoCapture(0)  # Open the default camera (camera index 0)
         if not cap.isOpened():
             raise RuntimeError("Could not open the camera")
@@ -94,32 +79,38 @@ class CameraFacialEmotionDetector:
                     print("Failed to capture frame. Exiting...")
                     break
                 
-                # Detect faces in the frame
                 faces = self.detect_faces(frame)
-                
-                for face in faces:
-                    x, y, w, h = face['x'], face['y'], face['w'], face['h']
+                # Only analyze the biggest face (largest area)
+                if faces:
+                    biggest = max(faces, key=lambda f: f['w'] * f['h'])
+                    x, y, w, h = biggest['x'], biggest['y'], biggest['w'], biggest['h']
                     face_roi = frame[y:y+h, x:x+w]
-                    
-                    # Process face to detect emotion
                     emotions = self.process_face(face_roi)
-                    
-                    # Output the detected emotions
+                    mood = self.classify_mood(emotions['Happy'], emotions['Normal'], emotions['Sad'])
+                    # Draw rectangle around face
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                    # Draw mood and emotion percentages above the face
+                    label = f"{mood}  Happy: {emotions['Happy']*100:.1f}%  Normal: {emotions['Normal']*100:.1f}%  Sad: {emotions['Sad']*100:.1f}%"
+                    cv2.putText(
+                        frame, label, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 200, 0), 2, cv2.LINE_AA
+                    )
+                    # Print to console as well
                     timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
                     print(f"Timestamp: {timestamp}")
                     print(f"Face at (x: {x}, y: {y}, w: {w}, h: {h})")
-                    print(f"  Top Emotion: {emotions['top_emotion']} ({emotions['confidence']:.2f})")
-                    print("  All Emotions:")
-                    for emotion in emotions['all_emotions']:
-                        print(f"    - {emotion['emotion']}: {emotion['confidence']:.2f}")
-                
-                # Exit on key press (e.g., 'q')
+                    print(f"  Mood: {mood}")
+                    print(f"  Happy: {emotions['Happy']*100:.2f}%")
+                    print(f"  Normal: {emotions['Normal']*100:.2f}%")
+                    print(f"  Sad: {emotions['Sad']*100:.2f}%")
+                # Show the frame
+                cv2.imshow("Facial Emotion Detection", frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     print("Exiting...")
                     break
 
         finally:
-            cap.release()  # Release the camera
+            cap.release()
+            cv2.destroyAllWindows()
 
 # Example usage
 if __name__ == "__main__":
