@@ -302,26 +302,25 @@ class MainScreen(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Decentralized Widget Demo")
-        # Make window full screen and windowless
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.showFullScreen()
-        # self.setGeometry(100, 100, 1920, 1080)  # Remove this line, not needed in fullscreen
-        screen = QApplication.primaryScreen()
-        size = screen.size()
-        self.screen_width = size.width()
-        self.screen_height = size.height()
+        self.repaint()  # Force update
 
+        # Get the real fullscreen size
+        self.screen_width = self.screen().geometry().width()
+        self.screen_height = self.screen().geometry().height()
         print(f"Screen size: {self.screen_width}x{self.screen_height}")
-        self.current = 0  # Start with the first widget
 
+        self.current = 0
         main_widget = QWidget()
         main_widget.setStyleSheet("background-color: #000000;")
         self.setCentralWidget(main_widget)
         main_layout = QVBoxLayout(main_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
         self.stack = QStackedLayout()
         main_layout.addLayout(self.stack)
-
         self.fade_widgets = []
         self._animations = []
         self.timer = QTimer(self)
