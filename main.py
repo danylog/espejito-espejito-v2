@@ -28,10 +28,14 @@ class StatisticsChart(QWidget):
         super().__init__(parent)
         self.setMinimumSize(1200, 650)
         self.setStyleSheet("background: transparent;")
-        self.data = [2, 3, 4, 2, 4, 1, 2, 3, 2, 1, 3, 4, 2, 2, 3, 1, 2, 4, 3, 2, 1, 2, 3, 4, 2, 1, 3, 2]
+        # Use float values for more precise mood positions
+        self.data = [
+            2.0, 3.0, 4.0, 2.5, 3.7, 1.2, 2.8, 3.3, 2.1, 1.0, 3.5, 4.0, 2.2, 2.9, 3.0, 1.7, 2.0, 4.0, 3.1, 2.6, 1.0, 2.4, 3.2, 4.0, 2.0, 1.5, 3.0, 2.3
+        ]
         self.window_size = 7
-        self.window_start = 0
         self.num_windows = (len(self.data) + self.window_size - 1) // self.window_size
+        # Start at the latest week
+        self.window_start = max(0, len(self.data) - self.window_size)
         self._drag_start_x = None
         self.start_date = start_date or date(2024, 4, 1)  # Default: April 1, 2024
         self.title_label = title_label
@@ -80,7 +84,8 @@ class StatisticsChart(QWidget):
         visible_data = self.data[self.window_start:self.window_start + self.window_size]
         for i, value in enumerate(visible_data):
             x = left + i * (w - left - right) / (self.window_size - 1)
-            y = top + (4 - value) * (h - top - bottom) / 4
+            # Use float value for y position
+            y = top + (4 - float(value)) * (h - top - bottom) / 4
             points.append((x, y))
         painter.setPen(line_pen)
         for i in range(len(points) - 1):
@@ -164,7 +169,7 @@ class StatisticsChart(QWidget):
         self._drag_start_x = None
 
 class VoronoiWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, num_points=10000, edges_per_tick=500):
         self.r = 217
         self.g = 134
         self.b = 86
@@ -177,19 +182,16 @@ class VoronoiWidget(QWidget):
         self.shown_edges = set()
         self.all_edges = []
         self.edge_graph = {}
-        self.edge_lookup = {}  # Added edge_lookup dictionary
+        self.edge_lookup = {}
         self.visited_vertices = set()
-        self.edges_to_add = []  # Added edges_to_add list
+        self.edges_to_add = []
         self.vor = None
-        self.edges_per_tick = 500
+        self.edges_per_tick = edges_per_tick  # Now configurable
         
         # Generate random points
-        num_points = 10000
         margin = 0
         width = self.width()
         height = self.height()
-        
-        # Generate points using numpy
         x_coords = np.random.uniform(margin, width - margin, num_points)
         y_coords = np.random.uniform(margin, height - margin, num_points)
         self.points = np.column_stack((x_coords, y_coords))
@@ -302,8 +304,8 @@ class MainScreen(QMainWindow):
         super().__init__()
         self.setWindowTitle("Decentralized Widget Demo")
         # Make window full screen and windowless
-        self.setWindowFlags(Qt.FramelessWindowHint)
-        self.showFullScreen()
+        #self.setWindowFlags(Qt.FramelessWindowHint)
+        #self.showFullScreen()
         # self.setGeometry(100, 100, 1920, 1080)  # Remove this line, not needed in fullscreen
 
         self.current = 0  # Start with the first widget
@@ -325,14 +327,17 @@ class MainScreen(QMainWindow):
         # Add widgets
         self.create_initial_widget(next_widget_index=1)                         #0
         self.create_widget1(next_widget_index=2)                     #1 
-        self.create_widget2(next_widget_index1=3, next_widget_index2=9) #2
+        self.create_widget2(next_widget_index1=3, next_widget_index2=9, next_widget_index3=10) #2
         self.create_show_face_widget(next_widget_index=4)            #3
         self.create_scan_face_countdown_widget(next_widget_index=5)     #4
         self.create_deteced_emotion_widget(next_widget_index1=6, next_widget_index2=4)      #5
         self.create_describe_emotion_widget(next_widget_index=7) #6
         self.create_cause_emotion_widget(next_widget_index=8) #7
-        self.create_send_to_contacts_widget(next_widget_index_no=0, next_widget_index_si=0) #8
+        self.create_send_to_contacts_widget(next_widget_index_no=0, next_widget_index_si=11) #8
         self.create_statistics_widget(next_widget_index=2) #9
+        self.create_contacts_widget(next_widget_index=2) # 10
+        self.create_share_contacts_widget(next_widget_index=0) # 11
+
        # self.create_day_details_widget(next_widget_index=9) #10
         
 
@@ -391,7 +396,7 @@ class MainScreen(QMainWindow):
         fade_widget.duration = 2000  # Auto transition after 3 seconds
         fade_widget.next_widget_index = next_widget_index
 
-    def create_widget2(self, next_widget_index1, next_widget_index2):
+    def create_widget2(self, next_widget_index1, next_widget_index2, next_widget_index3):
         """
         Creates the second widget with auto transition after 2000ms.
         """
@@ -433,6 +438,18 @@ class MainScreen(QMainWindow):
         line2.setFixedSize(1000, 5)
         layout.addWidget(line2)
 
+        # --- NEW: Add "VER CONTACTOS" button ---
+        button3 = QPushButton("VER CONTACTOS")
+        button3.setStyleSheet("background-color: #000; color: white; font-size: 50px; font-family: 'Jost'; font-weight: 150;")
+        layout.addWidget(button3, alignment=Qt.AlignLeft)
+
+        line3 = QFrame()
+        line3.setFrameShape(QFrame.HLine)
+        line3.setFrameShadow(QFrame.Plain)
+        line3.setStyleSheet("background-color: orange;")
+        line3.setFixedSize(700, 5)
+        layout.addWidget(line3)
+
         fade_widget = FadeWidget(widget)
         self.stack.addWidget(fade_widget)
         self.fade_widgets.append(fade_widget)
@@ -440,11 +457,200 @@ class MainScreen(QMainWindow):
         # Connect button for manual transition
         button.clicked.connect(lambda: self.fade_to(self.current, next_widget_index1))
         button2.clicked.connect(lambda: self.fade_to(self.current, next_widget_index2))
-
+        button3.clicked.connect(lambda: self.fade_to(self.current, next_widget_index3))
 
         # Store transition behavior
         fade_widget.auto = False
-    
+
+    def create_contacts_widget(self, next_widget_index):
+        widget = QWidget()
+        widget.setStyleSheet("background-color: #000000;")
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(80, 80, 80, 80)
+
+        title = QLabel("TUS CONTACTOS")
+        title.setStyleSheet("color: white; font-size: 90px; font-family: 'Jost'; font-weight: 200;")
+        title.setAlignment(Qt.AlignLeft)
+        layout.addWidget(title)
+        layout.addSpacing(40)
+
+        # Example contacts list
+        contacts = ["Mamá", "Papá", "Amigo 1", "Amiga 2", "Psicóloga"]
+        for contact in contacts:
+            contact_label = QLabel(contact)
+            contact_label.setStyleSheet("color: #ccc; font-size: 48px; font-family: 'Jost'; font-weight: 200;")
+            layout.addWidget(contact_label)
+            layout.addSpacing(10)
+
+        layout.addStretch()
+
+        # Back button
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        volver_btn = QPushButton("VOLVER")
+        volver_btn.setStyleSheet("""
+            background-color: #000;
+            color: white;
+            font-size: 32px;
+            font-family: 'Jost';
+            font-weight: 100;
+            border: none;
+        """)
+        button_container = QVBoxLayout()
+        button_container.setSpacing(0)
+        button_container.setContentsMargins(0, 0, 0, 0)
+        button_container.addWidget(volver_btn)
+        underline = QFrame()
+        underline.setFrameShape(QFrame.HLine)
+        underline.setFrameShadow(QFrame.Plain)
+        underline.setStyleSheet("background-color: orange;")
+        underline.setFixedHeight(3)
+        button_container.addWidget(underline)
+        button_layout.addLayout(button_container)
+        layout.addLayout(button_layout)
+
+        fade_widget = FadeWidget(widget)
+        self.stack.addWidget(fade_widget)
+        self.fade_widgets.append(fade_widget)
+
+        volver_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
+        return fade_widget
+
+    def create_share_contacts_widget(self, next_widget_index):
+        widget = QWidget()
+        widget.setStyleSheet("background-color: #000000;")
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(80, 80, 80, 80)
+
+        title = QLabel("¿CON QUIÉN QUIERES COMPARTIRLO?")
+        title.setStyleSheet("color: white; font-size: 90px; font-family: 'Jost'; font-weight: 200;")
+        title.setAlignment(Qt.AlignLeft)
+        layout.addWidget(title)
+        layout.addSpacing(40)
+
+        # Example contacts list with checkboxes
+        contacts = ["Mamá", "Papá", "Amigo 1", "Amiga 2", "Psicóloga"]
+        self.selected_contacts = set()
+        for contact in contacts:
+            btn = QPushButton(contact)
+            btn.setCheckable(True)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #000;
+                    color: #ccc;
+                    font-size: 48px;
+                    font-family: 'Jost';
+                    font-weight: 200;
+                    border: 2px solid #444;
+                    border-radius: 12px;
+                    margin-bottom: 10px;
+                }
+                QPushButton:checked {
+                    background-color: orange;
+                    color: white;
+                }
+            """)
+            btn.clicked.connect(lambda checked, c=contact: self.selected_contacts.add(c) if checked else self.selected_contacts.discard(c))
+            layout.addWidget(btn)
+            layout.addSpacing(10)
+
+        layout.addStretch()
+
+        # GUARDAR button
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        guardar_btn = QPushButton("GUARDAR")
+        guardar_btn.setStyleSheet("""
+            background-color: #000;
+            color: white;
+            font-size: 32px;
+            font-family: 'Jost';
+            font-weight: 100;
+            border: none;
+        """)
+        button_container = QVBoxLayout()
+        button_container.setSpacing(0)
+        button_container.setContentsMargins(0, 0, 0, 0)
+        button_container.addWidget(guardar_btn)
+        underline = QFrame()
+        underline.setFrameShape(QFrame.HLine)
+        underline.setFrameShadow(QFrame.Plain)
+        underline.setStyleSheet("background-color: orange;")
+        underline.setFixedHeight(3)
+        button_container.addWidget(underline)
+        button_layout.addLayout(button_container)
+        layout.addLayout(button_layout)
+
+        fade_widget = FadeWidget(widget)
+        self.stack.addWidget(fade_widget)
+        self.fade_widgets.append(fade_widget)
+
+        guardar_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
+        return fade_widget
+
+    # --- In __init__ or where you add widgets, update the indices ---
+    # Example:
+    # --- At the end of create_send_to_contacts_widget, after user says "SI", go to share contacts page ---
+    def create_send_to_contacts_widget(self, next_widget_index_si, next_widget_index_no):
+        widget = QWidget()
+        widget.setStyleSheet("background-color: #000000;")
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(40, 40, 40, 40)
+
+        # Title
+        title = QLabel("¿TE GUSTARÍA\nCOMPARTIRLO CON\nTUS CONTACTOS?")
+        title.setStyleSheet("color: white; font-size: 100px; font-family: 'Jost'; font-weight: 200;")
+        title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        layout.addWidget(title)
+        layout.addStretch()
+
+        # SI / NO buttons with underline
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(60)
+        button_layout.setContentsMargins(40, 0, 0, 40)
+
+        # SI button with underline
+        si_container = QVBoxLayout()
+        si_container.setSpacing(0)
+        si_container.setContentsMargins(0, 0, 0, 0)
+        si_btn = QPushButton("SI")
+        si_btn.setCursor(Qt.PointingHandCursor)
+        si_btn.setStyleSheet("color: white; font-size: 38px; font-family: 'Jost'; border: none; background: transparent;")
+        si_btn.clicked.connect(lambda: self.fade_to(self.current, 11))  # Go to share contacts page
+        si_container.addWidget(si_btn)
+        si_underline = QFrame()
+        si_underline.setFrameShape(QFrame.HLine)
+        si_underline.setFrameShadow(QFrame.Plain)
+        si_underline.setStyleSheet("background-color: orange;")
+        si_underline.setFixedHeight(3)
+        si_container.addWidget(si_underline)
+
+        # NO button with underline
+        no_container = QVBoxLayout()
+        no_container.setSpacing(0)
+        no_container.setContentsMargins(0, 0, 0, 0)
+        no_btn = QPushButton("NO")
+        no_btn.setCursor(Qt.PointingHandCursor)
+        no_btn.setStyleSheet("color: white; font-size: 38px; font-family: 'Jost'; border: none; background: transparent;")
+        no_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index_no))
+        no_container.addWidget(no_btn)
+        no_underline = QFrame()
+        no_underline.setFrameShape(QFrame.HLine)
+        no_underline.setFrameShadow(QFrame.Plain)
+        no_underline.setStyleSheet("background-color: orange;")
+        no_underline.setFixedHeight(3)
+        no_container.addWidget(no_underline)
+
+        button_layout.addLayout(si_container)
+        button_layout.addSpacing(40)
+        button_layout.addLayout(no_container)
+        button_layout.addStretch()
+        layout.addLayout(button_layout)
+
+        fade_widget = FadeWidget(widget)
+        self.stack.addWidget(fade_widget)
+        self.fade_widgets.append(fade_widget)
+        
     def create_show_face_widget(self, next_widget_index):
         """
         Creates the widget that shows the face with a button to go back.
@@ -530,7 +736,7 @@ class MainScreen(QMainWindow):
         voronoi_label.setFixedSize(1800, 800)
         layout.addWidget(voronoi_label)
 
-        voronoi = VoronoiWidget()
+        voronoi = VoronoiWidget(parent=None, num_points=2500, edges_per_tick=500)
 
         # --- Overlay text container ---
         text_container = QWidget(voronoi_label)
