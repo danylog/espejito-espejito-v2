@@ -163,15 +163,13 @@ class StatisticsChart(QWidget):
         self._drag_start_x = None
 
 class VoronoiWidget(QWidget):
-    def __init__(self, parent=None, width=1920, height=800):
-        super().__init__(parent)
-        self.setStyleSheet("background-color: #000000;")
-        self.setFixedSize(width, height)
+    def __init__(self, parent=None):
         self.r = 217
         self.g = 134
         self.b = 86
         super().__init__(parent)
-
+        self.setStyleSheet("background-color: #000000;")
+        self.setFixedSize(1920, 800)
         
         # Initialize data structures
         self.points = []
@@ -302,25 +300,21 @@ class MainScreen(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Decentralized Widget Demo")
+        # Make window full screen and windowless
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.showFullScreen()
-        self.repaint()  # Force update
+        # self.setGeometry(100, 100, 1920, 1080)  # Remove this line, not needed in fullscreen
 
-        # Get the real fullscreen size
-        self.screen_width = 1920
-        self.screen_height = 1080
-        print(f"Screen size: {self.screen_width}x{self.screen_height}")
+        self.current = 0  # Start with the first widget
 
-        self.current = 0
         main_widget = QWidget()
         main_widget.setStyleSheet("background-color: #000000;")
         self.setCentralWidget(main_widget)
         main_layout = QVBoxLayout(main_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
 
         self.stack = QStackedLayout()
         main_layout.addLayout(self.stack)
+
         self.fade_widgets = []
         self._animations = []
         self.timer = QTimer(self)
@@ -417,7 +411,7 @@ class MainScreen(QMainWindow):
         layout.addWidget(label1)
 
         button = QPushButton("ESCANEAR ESTADO EMOCIONAL")
-        button.setStyleSheet("background-color: #000000; color: white; font-size: 50px; font-family: 'Jost'; font-weight: 150; border-bottom: 40px solid white;")
+        button.setStyleSheet("background-color: #000; color: white; font-size: 50px; font-family: 'Jost'; font-weight: 150; border-bottom: 40px solid white;")
         layout.addWidget(button, alignment=Qt.AlignLeft)
                 
         line = QFrame()
@@ -428,7 +422,7 @@ class MainScreen(QMainWindow):
         layout.addWidget(line)
 
         button2 = QPushButton("VER ESTADÍSTICAS DEL ESTADO EMOCIONAL")
-        button2.setStyleSheet("background-color: #000000; color: white; font-size: 50px; font-family: 'Jost'; font-weight: 150;")
+        button2.setStyleSheet("background-color: #000; color: white; font-size: 50px; font-family: 'Jost'; font-weight: 150;")
         layout.addWidget(button2, alignment=Qt.AlignLeft)
 
         line2 = QFrame()
@@ -523,18 +517,19 @@ class MainScreen(QMainWindow):
         return fade_widget
 
     def create_deteced_emotion_widget(self, next_widget_index1, next_widget_index2):
+        # Create main widget
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
+
+        # ... previous code ...
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Use screen size for the label
         voronoi_label = QLabel()
-        voronoi_label.setFixedSize(self.screen_width, int(self.screen_height * 0.45))
+        voronoi_label.setFixedSize(1800, 800)
         layout.addWidget(voronoi_label)
 
-        # Pass screen size to VoronoiWidget
-        voronoi = VoronoiWidget(width=self.screen_width, height=int(self.screen_height * 0.45))
+        voronoi = VoronoiWidget()
 
         # --- Overlay text container ---
         text_container = QWidget(voronoi_label)
