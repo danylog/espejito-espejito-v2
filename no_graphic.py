@@ -1,15 +1,12 @@
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 import torch
 import cv2
-import subprocess
-import os
-import time
 from datetime import datetime
 from typing import List, Dict
-import uuid
 
 class CameraFacialEmotionDetector:
     def __init__(self):
+        # ...existing model loading code...
         self.processor = AutoImageProcessor.from_pretrained(
             "prithivMLmods/Facial-Emotion-Detection-SigLIP2", use_fast=False
         )
@@ -35,11 +32,10 @@ class CameraFacialEmotionDetector:
             probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
         filtered_probs = probs[0][self.target_indices]
         filtered_probs = filtered_probs / filtered_probs.sum()
-        return {
-            'Happy': filtered_probs[0].item(),
-            'Normal': filtered_probs[1].item(),
-            'Sad': filtered_probs[2].item()
-        }
+        happy = filtered_probs[0].item()
+        normal = filtered_probs[1].item()
+        sad = filtered_probs[2].item()
+        return {'Happy': happy, 'Normal': normal, 'Sad': sad}
 
     def classify_mood(self, happy, normal, sad):
         diff = happy - sad
@@ -55,26 +51,17 @@ class CameraFacialEmotionDetector:
             return "MUY TRISTE"
 
     def analyze_camera_feed(self):
-        tmp_img_path = f"/tmp/cam_frame_{uuid.uuid4().hex}.jpg"
-        print("Using libcamera-still to capture frames... Press 'q' in the window to quit.")
+        # Use V4L2 backend for Pi Camera (if needed)
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        if not cap.isOpened():
+            raise RuntimeError("Could not open the camera (try sudo or check camera connection)")
 
         try:
             while True:
-                # Capture a frame using libcamera-still
-                cmd = [
-                    "libcamera-still", "-n", "-t", "1", "-o", tmp_img_path,
-                    "--width", "640", "--height", "480", "--quality", "90"
-                ]
-                result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                if result.returncode != 0 or not os.path.exists(tmp_img_path):
-                    print("Failed to capture frame.")
-                    continue
-
-                frame = cv2.imread(tmp_img_path)
-                if frame is None:
-                    print("Failed to read captured frame.")
-                    continue
-
+                ret, frame = cap.read()
+                if not ret:
+                    print("Failed to capture frame. Exiting...")
+                    break
                 faces = self.detect_faces(frame)
                 if faces:
                     biggest = max(faces, key=lambda f: f['w'] * f['h'])
@@ -82,11 +69,9 @@ class CameraFacialEmotionDetector:
                     face_roi = frame[y:y+h, x:x+w]
                     emotions = self.process_face(face_roi)
                     mood = self.classify_mood(emotions['Happy'], emotions['Normal'], emotions['Sad'])
-
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
                     label = f"{mood}  Happy: {emotions['Happy']*100:.1f}%  Normal: {emotions['Normal']*100:.1f}%  Sad: {emotions['Sad']*100:.1f}%"
                     cv2.putText(frame, label, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 200, 0), 2, cv2.LINE_AA)
-
                     timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
                     print(f"Timestamp: {timestamp}")
                     print(f"Face at (x: {x}, y: {y}, w: {w}, h: {h})")
@@ -94,23 +79,17 @@ class CameraFacialEmotionDetector:
                     print(f"  Happy: {emotions['Happy']*100:.2f}%")
                     print(f"  Normal: {emotions['Normal']*100:.2f}%")
                     print(f"  Sad: {emotions['Sad']*100:.2f}%")
-
                 cv2.imshow("Facial Emotion Detection", frame)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
+                    print("Exiting...")
                     break
-
-                # Clean up the temp file after reading
-                if os.path.exists(tmp_img_path):
-                    os.remove(tmp_img_path)
-
-                time.sleep(0.1)  # Delay to avoid overwhelming system
         finally:
-            if os.path.exists(tmp_img_path):
-                os.remove(tmp_img_path)
+            cap.release()
             cv2.destroyAllWindows()
-
+# Example usage
 if __name__ == "__main__":
     detector = CameraFacialEmotionDetector()
+    
     try:
         print("Starting emotion detection from the camera...")
         print("Press 'q' to stop.")
