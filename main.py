@@ -26,6 +26,8 @@ from datetime import date, timedelta
 import threading
 os.environ["QT_QPA_PLATFORMTHEME"] = "fusion"
 
+latest_emotion = None
+latest_mood = None
 
 class StatisticsChart(QWidget):
     day_clicked = pyqtSignal(int)  # index in self.data
@@ -762,12 +764,12 @@ class MainScreen(QMainWindow):
                 print(f"  Happy: {emotions['Happy']*100:.2f}%")
                 print(f"  Normal: {emotions['Normal']*100:.2f}%")
                 print(f"  Sad: {emotions['Sad']*100:.2f}%")
-                self.latest_emotion = emotions
-                self.latest_mood = mood
+                latest_emotion = emotions
+                latest_mood = mood
             else:
                 print("[DEBUG] No faces detected in this frame.")
-                self.latest_emotion = None
-                self.latest_mood = None
+                latest_emotion = None
+                latest_mood = None
         finally:
             print("[DEBUG] Releasing camera...")
             cap.release()
@@ -849,7 +851,7 @@ class MainScreen(QMainWindow):
 
         # Dynamic emotion label (set only once when widget is shown)
         self.emotion_label = QLabel("FELIZ")  # Default text
-        self.emotion_label.setText(self.latest_mood if self.latest_mood else "NO DETECTADO")
+        self.emotion_label.setText(latest_mood if latest_mood else "NO DETECTADO")
         self.emotion_label.setStyleSheet("color: white; font-size: 75px; font-family: 'Jost'; font-weight: 200; background: transparent;")
         self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         text_layout.addWidget(self.emotion_label)
