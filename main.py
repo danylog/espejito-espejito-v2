@@ -1,6 +1,8 @@
 import sys
 import os
 import cv2
+import time
+from datetime import datetime
 
 from PyQt5.QtCore import QPropertyAnimation, pyqtProperty, QEasingCurve, Qt, QTimer, QRect, pyqtSignal
 from PyQt5.QtWidgets import (
@@ -350,6 +352,9 @@ class MainScreen(QMainWindow):
        # self.create_day_details_widget(next_widget_index=9) #10
         
 
+        self._detection_running = True
+        self._detection_thread = threading.Thread(target=self._continuous_face_detection, daemon=True)
+        self._detection_thread.start()
 
         # Set the first widget as visible
         self.stack.setCurrentWidget(self.fade_widgets[0])
@@ -357,6 +362,38 @@ class MainScreen(QMainWindow):
 
         # Start the timer if the first widget has auto transition
         self._start_auto_timer_for_current()
+
+    def _continuous_face_detection(self):
+        print("[DEBUG] Starting continuous face detection thread...")
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            print("[DEBUG] Could not open the camera for continuous detection.")
+            return
+        try:
+            while self._detection_running:
+                # Flush buffer for freshest frame
+                for _ in range(5):
+                    cap.read()
+                ret, frame = cap.read()
+                if not ret:
+                    continue
+                frame = cv2.resize(frame, (320, 240))
+                faces = self.facial_detector.detect_faces(frame)
+                if faces:
+                    biggest = max(faces, key=lambda f: f['w'] * f['h'])
+                    x, y, w, h = biggest['x'], biggest['y'], biggest['w'], biggest['h']
+                    face_roi = frame[y:y+h, x:x+w]
+                    emotions = self.facial_detector.process_face(face_roi)
+                    mood = self.facial_detector.classify_mood(
+                        emotions['Happy'], emotions['Normal'], emotions['Sad']
+                    )
+                    self.latest_emotion = emotions
+                    self.latest_mood = mood
+                # else:  # Do NOT overwrite latest_emotion/latest_mood if no face detected
+                time.sleep(0.5)  # Adjust for CPU usage
+        finally:
+            print("[DEBUG] Releasing camera for continuous detection...")
+            cap.release()
 
     def create_initial_widget(self, next_widget_index):
         """
@@ -682,6 +719,59 @@ class MainScreen(QMainWindow):
         fade_widget.duration = 4000  # Auto transition after 3 seconds
         fade_widget.next_widget_index = next_widget_index
 
+   # Add this import at the top if not present
+
+    def scan_and_detect_emotion(self):
+        """
+        This method runs in a thread and uses the same logic as no_graphic.py
+        to get the freshest frame and detect emotion.
+        """
+        print("[DEBUG] Opening camera for scan...")
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        if not cap.isOpened():
+            print("[DEBUG] Could not open the camera (try sudo or check camera connection)")
+            self.latest_emotion = None
+            self.latest_mood = None
+            return
+
+        try:
+            print("[DEBUG] Flushing camera buffer...")
+            for _ in range(10):
+                cap.read()
+            print("[DEBUG] Capturing frame...")
+            ret, frame = cap.read()
+            if not ret:
+                print("[DEBUG] Failed to capture frame. Exiting scan.")
+                self.latest_emotion = None
+                self.latest_mood = None
+                return
+
+            frame = cv2.resize(frame, (320, 240))
+            faces = self.facial_detector.detect_faces(frame)
+            if faces:
+                biggest = max(faces, key=lambda f: f['w'] * f['h'])
+                x, y, w, h = biggest['x'], biggest['y'], biggest['w'], biggest['h']
+                print(f"[DEBUG] Biggest face at (x: {x}, y: {y}, w: {w}, h: {h})")
+                face_roi = frame[y:y+h, x:x+w]
+                emotions = self.facial_detector.process_face(face_roi)
+                mood = self.facial_detector.classify_mood(emotions['Happy'], emotions['Normal'], emotions['Sad'])
+                timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+                print(f"Timestamp: {timestamp}")
+                print(f"Face at (x: {x}, y: {y}, w: {w}, h: {h})")
+                print(f"  Mood: {mood}")
+                print(f"  Happy: {emotions['Happy']*100:.2f}%")
+                print(f"  Normal: {emotions['Normal']*100:.2f}%")
+                print(f"  Sad: {emotions['Sad']*100:.2f}%")
+                self.latest_emotion = emotions
+                self.latest_mood = mood
+            else:
+                print("[DEBUG] No faces detected in this frame.")
+                self.latest_emotion = None
+                self.latest_mood = None
+        finally:
+            print("[DEBUG] Releasing camera...")
+            cap.release()
+
     def create_scan_face_countdown_widget(self, next_widget_index):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
@@ -700,54 +790,14 @@ class MainScreen(QMainWindow):
         def start_countdown_and_scan():
             self.countdown_value = 3
             self.countdown_label.setText("3")
-            self.latest_emotion = None
-            self.latest_mood = None
-            self._scan_running = True
-            self._scan_face_found = False
+            # Do NOT reset self.latest_emotion/self.latest_mood here!
 
-            # Start scanning in a thread
-            def scan_loop():
-                cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-                try:
-                    while self._scan_running:
-                        ret, frame = cap.read()
-                        if not ret:
-                            continue
-                        faces = self.facial_detector.detect_faces(frame)
-                        if faces:
-                            biggest = max(faces, key=lambda f: f['w'] * f['h'])
-                            x, y, w, h = biggest['x'], biggest['y'], biggest['w'], biggest['h']
-                            face_roi = frame[y:y+h, x:x+w]
-                            emotions = self.facial_detector.process_face(face_roi)
-                            mood = self.facial_detector.classify_mood(emotions['Happy'], emotions['Normal'], emotions['Sad'])
-                            # Save for UI update
-                            self.latest_emotion = emotions
-                            self.latest_mood = mood
-                            self._scan_face_found = True
-                            
-                            print(f"Face at (x: {x}, y: {y}, w: {w}, h: {h})")
-                            print(f"  Mood: {mood}")
-                            print(f"  Happy: {emotions['Happy']*100:.2f}%")
-                            print(f"  Normal: {emotions['Normal']*100:.2f}%")
-                            print(f"  Sad: {emotions['Sad']*100:.2f}%")
-                        # Sleep a bit to avoid 100% CPU
-                        cv2.waitKey(1)
-                finally:
-                    cap.release()
-
-            self._scan_thread = threading.Thread(target=scan_loop, daemon=True)
-            self._scan_thread.start()
-
-            # Countdown logic
             def update_countdown():
                 if self.countdown_value > 0:
                     self.countdown_label.setText(str(self.countdown_value))
                     QTimer.singleShot(1000, decrease_counter)
                 else:
-                    self._scan_running = False
-                    # Wait for the scan thread to finish
-                    if self._scan_thread.is_alive():
-                        self._scan_thread.join(timeout=1)
+                    # Just use the latest detected emotion from the continuous thread
                     QTimer.singleShot(0, lambda: self._on_scan_done(next_widget_index))
 
             def decrease_counter():
@@ -762,6 +812,7 @@ class MainScreen(QMainWindow):
         fade_widget.auto = False
         return fade_widget
 
+    # ... rest of your code ...
     def _on_scan_done(self, next_widget_index):
         fallback = "NO DETECTADO"
         for fw in self.fade_widgets:
