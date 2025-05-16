@@ -24,6 +24,18 @@ import numpy as np
 from scipy.spatial import Voronoi
 from datetime import date, timedelta
 import threading
+
+import RPi.GPIO as GPIO
+
+# Setup GPIO mode and pins (choose your pins)
+GPIO.setmode(GPIO.BCM)
+PWM_PINS = [17, 27, 22]  # Example GPIO pins
+for pin in PWM_PINS:
+    GPIO.setup(pin, GPIO.OUT)
+pwms = [GPIO.PWM(pin, 100) for pin in PWM_PINS]  # 100 Hz frequency
+for pwm in pwms:
+    pwm.start(0)  # Start with 0% duty cycle
+
 os.environ["QT_QPA_PLATFORMTHEME"] = "fusion"
 
 latest_emotion = None
@@ -830,6 +842,42 @@ class MainScreen(QMainWindow):
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
 
+
+
+        def set_emotion_label_once_and_pwm():
+            mood = latest_mood if latest_mood else "NO DETECTADO"
+            self.emotion_label.setText(mood)
+            self.emotion_label.setStyleSheet("color: white; font-size: 75px; font-family: 'Jost'; font-weight: 200; background: transparent;")
+            self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+            text_layout.addWidget(self.emotion_label)
+            text_layout.addStretch()
+            # Example: set PWM duty cycle based on mood
+            if mood == "MUY FELIZ":
+                pwms[0].ChangeDutyCycle(100)
+                pwms[1].ChangeDutyCycle(0)
+                pwms[2].ChangeDutyCycle(0)
+            elif mood == "FELIZ":
+                pwms[0].ChangeDutyCycle(70)
+                pwms[1].ChangeDutyCycle(0)
+                pwms[2].ChangeDutyCycle(0)
+            elif mood == "NORMAL":
+                pwms[0].ChangeDutyCycle(0)
+                pwms[1].ChangeDutyCycle(70)
+                pwms[2].ChangeDutyCycle(0)
+            elif mood == "TRISTE":
+                pwms[0].ChangeDutyCycle(0)
+                pwms[1].ChangeDutyCycle(0)
+                pwms[2].ChangeDutyCycle(70)
+            elif mood == "MUY TRISTE":
+                pwms[0].ChangeDutyCycle(0)
+                pwms[1].ChangeDutyCycle(0)
+                pwms[2].ChangeDutyCycle(100)
+            else:
+                for pwm in pwms:
+                    pwm.ChangeDutyCycle(0)
+
+        fade_widget.visibilityChanged = lambda: (set_emotion_label_once_and_pwm(), voronoi.start_animation())
+
         voronoi_label = QLabel()
         voronoi_label.setFixedSize(1800, 800)
         layout.addWidget(voronoi_label)
@@ -850,12 +898,8 @@ class MainScreen(QMainWindow):
         text_layout.addWidget(title_label)
 
         # Dynamic emotion label (set only once when widget is shown)
-        self.emotion_label = QLabel("FELIZ")  # Default text
-        self.emotion_label.setText(latest_mood if latest_mood else "NO DETECTADO")
-        self.emotion_label.setStyleSheet("color: white; font-size: 75px; font-family: 'Jost'; font-weight: 200; background: transparent;")
-        self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        text_layout.addWidget(self.emotion_label)
-        text_layout.addStretch()
+
+
 
         # Buttons
         self.saveButton = QPushButton("GUARDAR")
@@ -914,7 +958,6 @@ class MainScreen(QMainWindow):
         def set_emotion_label_once():
             self.emotion_label.setText(self.latest_mood if self.latest_mood else "NO DETECTADO")
 
-        fade_widget.visibilityChanged = lambda: (set_emotion_label_once(), voronoi.start_animation())
 
         fade_widget.auto = False
         fade_widget.duration = 0
