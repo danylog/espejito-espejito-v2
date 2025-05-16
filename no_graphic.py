@@ -73,9 +73,6 @@ class CameraFacialEmotionDetector:
                     face_roi = frame[y:y+h, x:x+w]
                     emotions = self.process_face(face_roi)
                     mood = self.classify_mood(emotions['Happy'], emotions['Normal'], emotions['Sad'])
-                    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                    label = f"{mood}  Happy: {emotions['Happy']*100:.1f}%  Normal: {emotions['Normal']*100:.1f}%  Sad: {emotions['Sad']*100:.1f}%"
-                    cv2.putText(frame, label, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 200, 0), 2, cv2.LINE_AA)
                     timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
                     print(f"Timestamp: {timestamp}")
                     print(f"Face at (x: {x}, y: {y}, w: {w}, h: {h})")
@@ -83,13 +80,9 @@ class CameraFacialEmotionDetector:
                     print(f"  Happy: {emotions['Happy']*100:.2f}%")
                     print(f"  Normal: {emotions['Normal']*100:.2f}%")
                     print(f"  Sad: {emotions['Sad']*100:.2f}%")
-                cv2.imshow("Facial Emotion Detection", frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    print("Exiting...")
-                    break
+                # Remove all cv2.imshow and waitKey calls
         finally:
             cap.release()
-            cv2.destroyAllWindows()
 # Example usage
 if __name__ == "__main__":
     detector = CameraFacialEmotionDetector()
