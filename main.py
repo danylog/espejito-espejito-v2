@@ -838,14 +838,17 @@ class MainScreen(QMainWindow):
         # Create main widget
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
-
+        
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
-
+        
+        self.emotion_label = QLabel()
+        layout.addWidget(self.emotion_label)
 
 
         def set_emotion_label_once_and_pwm():
             mood = latest_mood if latest_mood else "NO DETECTADO"
+            
             self.emotion_label.setText(mood)
             self.emotion_label.setStyleSheet("color: white; font-size: 75px; font-family: 'Jost'; font-weight: 200; background: transparent;")
             self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
