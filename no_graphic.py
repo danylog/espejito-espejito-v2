@@ -1,12 +1,13 @@
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 import torch
 import cv2
+import time
 from datetime import datetime
 from typing import List, Dict
 
 class CameraFacialEmotionDetector:
     def __init__(self):
-        # ...existing model loading code...
+        # Load processor and model (this is slow, but only done once)
         self.processor = AutoImageProcessor.from_pretrained(
             "prithivMLmods/Facial-Emotion-Detection-SigLIP2", use_fast=False
         )
@@ -16,7 +17,9 @@ class CameraFacialEmotionDetector:
         self.model.eval()
         self.emotion_mapping = {2: 'Happy', 3: 'Normal', 4: 'Sad'}
         self.target_indices = [2, 3, 4]
-        self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        self.face_cascade = cv2.CascadeClassifier(
+            cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+        )
 
     def detect_faces(self, frame: cv2.Mat) -> List[Dict[str, int]]:
         # Only convert if frame has 3 channels (color)
@@ -24,7 +27,9 @@ class CameraFacialEmotionDetector:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         else:
             gray = frame  # Already grayscale
-        faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=3, minSize=(48, 48))
+        faces = self.face_cascade.detectMultiScale(
+            gray, scaleFactor=1.1, minNeighbors=3, minSize=(48, 48)
+        )
         return [{'x': x, 'y': y, 'w': w, 'h': h} for (x, y, w, h) in faces]
 
     def process_face(self, face_roi: cv2.Mat) -> Dict:
@@ -66,6 +71,10 @@ class CameraFacialEmotionDetector:
                 if not ret:
                     print("Failed to capture frame. Exiting...")
                     break
+
+                # Resize for faster processing (optional, but helps on Pi)
+                frame = cv2.resize(frame, (320, 240))
+
                 faces = self.detect_faces(frame)
                 if faces:
                     biggest = max(faces, key=lambda f: f['w'] * f['h'])
@@ -80,16 +89,17 @@ class CameraFacialEmotionDetector:
                     print(f"  Happy: {emotions['Happy']*100:.2f}%")
                     print(f"  Normal: {emotions['Normal']*100:.2f}%")
                     print(f"  Sad: {emotions['Sad']*100:.2f}%")
-                # Remove all cv2.imshow and waitKey calls
+                # Only process every 5 seconds to avoid overload
+                time.sleep(5)
         finally:
             cap.release()
+
 # Example usage
 if __name__ == "__main__":
     detector = CameraFacialEmotionDetector()
-    
     try:
         print("Starting emotion detection from the camera...")
-        print("Press 'q' to stop.")
+        print("Press Ctrl+C to stop.")
         detector.analyze_camera_feed()
     except Exception as e:
         print(f"Error: {e}")
