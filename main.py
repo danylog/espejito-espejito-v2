@@ -825,7 +825,6 @@ class MainScreen(QMainWindow):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
 
-        # ... previous code ...
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -837,7 +836,6 @@ class MainScreen(QMainWindow):
 
         # --- Overlay text container ---
         text_container = QWidget(voronoi_label)
-        # text_container.setAttribute(Qt.WA_TransparentForMouseEvents)
         text_container.setStyleSheet("background: transparent;")
         text_container.setGeometry(0, 0, 1600, 800)
         text_layout = QVBoxLayout(text_container)
@@ -849,16 +847,15 @@ class MainScreen(QMainWindow):
         title_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         text_layout.addWidget(title_label)
 
-        # Dynamic emotion label
+        # Dynamic emotion label (set only once when widget is shown)
         self.emotion_label = QLabel("FELIZ")  # Default text
+        self.emotion_label.setText(self.latest_mood if self.latest_mood else "NO DETECTADO")
         self.emotion_label.setStyleSheet("color: white; font-size: 75px; font-family: 'Jost'; font-weight: 200; background: transparent;")
         self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         text_layout.addWidget(self.emotion_label)
         text_layout.addStretch()
-        # ...existing code...
-        
 
-        
+        # Buttons
         self.saveButton = QPushButton("GUARDAR")
         self.saveButton.setStyleSheet("background-color: #000; color: white; margin-left: 100px; font-size: 50px; font-family: 'Jost'; font-weight: 100;")
         self.tryButton = QPushButton("REINTENTAR")
@@ -911,14 +908,11 @@ class MainScreen(QMainWindow):
         self.stack.addWidget(fade_widget)
         self.fade_widgets.append(fade_widget)
 
-        def start_animation():
-            print("Starting Voronoi animation")
-            voronoi.start_animation()
+        # Set the emotion label only once when the widget is shown
+        def set_emotion_label_once():
+            self.emotion_label.setText(self.latest_mood if self.latest_mood else "NO DETECTADO")
 
-        fade_widget.visibilityChanged = start_animation
-
-        # Allow dynamic update from outside
-        fade_widget.set_emotion = self.emotion_label.setText
+        fade_widget.visibilityChanged = lambda: (set_emotion_label_once(), voronoi.start_animation())
 
         fade_widget.auto = False
         fade_widget.duration = 0
