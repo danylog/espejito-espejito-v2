@@ -27,6 +27,10 @@ import threading
 
 import RPi.GPIO as GPIO
 
+from PyQt5.QtGui import QCursor
+
+
+
 GPIO.setmode(GPIO.BCM)
 GPIO_INPUT_PIN = 21
 GPIO.setup(GPIO_INPUT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -332,7 +336,10 @@ class MainScreen(QMainWindow):
         self._scan_thread = None
         self._scan_running = False
         self.setWindowTitle("Decentralized Widget Demo")
-
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.showFullScreen()
+        # Inside your main window or widget class:
+        self.setCursor(Qt.BlankCursor)
 
         self.black_overlay = QWidget(self)
         self.black_overlay.setStyleSheet("background-color: black;")
@@ -341,8 +348,7 @@ class MainScreen(QMainWindow):
         self.black_overlay.setAttribute(Qt.WA_TransparentForMouseEvents, True)
 
         # Make window full screen and windowless
-        #self.setWindowFlags(Qt.FramelessWindowHint)
-        #self.showFullScreen()
+
         # self.setGeometry(100, 100, 1920, 1080)  # Remove this line, not needed in fullscreen
 
         self.current = 0  # Start with the first widget
