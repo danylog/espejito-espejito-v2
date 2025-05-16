@@ -56,7 +56,7 @@ class CameraFacialEmotionDetector:
 
     def analyze_camera_feed(self):
         # Use V4L2 backend for Pi Camera (if needed)
-        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             raise RuntimeError("Could not open the camera (try sudo or check camera connection)")
 
