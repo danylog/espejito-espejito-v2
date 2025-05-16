@@ -1,10 +1,12 @@
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 import torch
 import cv2
+import subprocess
 import os
 import time
 from datetime import datetime
 from typing import List, Dict
+import uuid
 
 class CameraFacialEmotionDetector:
     def __init__(self):
@@ -53,17 +55,24 @@ class CameraFacialEmotionDetector:
             return "MUY TRISTE"
 
     def analyze_camera_feed(self):
-        # Use Pi camera as a video stream (V4L2 backend)
-        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-        if not cap.isOpened():
-            print("Could not open camera. Make sure the camera is enabled and accessible.")
-            return
+        tmp_img_path = f"/tmp/cam_frame_{uuid.uuid4().hex}.jpg"
+        print("Using libcamera-still to capture frames... Press 'q' in the window to quit.")
 
         try:
             while True:
-                ret, frame = cap.read()
-                if not ret:
+                # Capture a frame using libcamera-still
+                cmd = [
+                    "libcamera-still", "-n", "-t", "1", "-o", tmp_img_path,
+                    "--width", "640", "--height", "480", "--quality", "90"
+                ]
+                result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                if result.returncode != 0 or not os.path.exists(tmp_img_path):
                     print("Failed to capture frame.")
+                    continue
+
+                frame = cv2.imread(tmp_img_path)
+                if frame is None:
+                    print("Failed to read captured frame.")
                     continue
 
                 faces = self.detect_faces(frame)
@@ -90,9 +99,14 @@ class CameraFacialEmotionDetector:
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
 
-                time.sleep(0.05)  # Small delay to reduce CPU usage
+                # Clean up the temp file after reading
+                if os.path.exists(tmp_img_path):
+                    os.remove(tmp_img_path)
+
+                time.sleep(0.1)  # Delay to avoid overwhelming system
         finally:
-            cap.release()
+            if os.path.exists(tmp_img_path):
+                os.remove(tmp_img_path)
             cv2.destroyAllWindows()
 
 if __name__ == "__main__":
