@@ -336,10 +336,11 @@ class MainScreen(QMainWindow):
         self._scan_thread = None
         self._scan_running = False
         self.setWindowTitle("Decentralized Widget Demo")
-        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.showFullScreen()
         # Inside your main window or widget class:
         self.setCursor(Qt.BlankCursor)
+        QApplication.setOverrideCursor(Qt.BlankCursor)
 
         self.black_overlay = QWidget(self)
         self.black_overlay.setStyleSheet("background-color: black;")
@@ -399,7 +400,9 @@ class MainScreen(QMainWindow):
 
         # Start the timer if the first widget has auto transition
         self._start_auto_timer_for_current()
-
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.black_overlay.setGeometry(0, 0, self.width(), self.height())
     def _check_gpio_input(self):
         if GPIO.input(GPIO_INPUT_PIN) == GPIO.LOW:
             print("[DEBUG] GPIO input detected, toggling black overlay.")
