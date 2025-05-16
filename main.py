@@ -876,7 +876,7 @@ class MainScreen(QMainWindow):
                 for pwm in pwms:
                     pwm.ChangeDutyCycle(0)
 
-        fade_widget.visibilityChanged = lambda: (set_emotion_label_once_and_pwm(), voronoi.start_animation())
+        
 
         voronoi_label = QLabel()
         voronoi_label.setFixedSize(1800, 800)
@@ -951,6 +951,7 @@ class MainScreen(QMainWindow):
         voronoi.update = update_voronoi
 
         fade_widget = FadeWidget(widget)
+        fade_widget.visibilityChanged = lambda: (set_emotion_label_once_and_pwm(), voronoi.start_animation())
         self.stack.addWidget(fade_widget)
         self.fade_widgets.append(fade_widget)
 
