@@ -400,9 +400,9 @@ class MainScreen(QMainWindow):
 
         # Start the timer if the first widget has auto transition
         self._start_auto_timer_for_current()
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.black_overlay.setGeometry(0, 0, self.width(), self.height())
+    # def resizeEvent(self, event):
+    #     super().resizeEvent(event)
+    #     self.black_overlay.setGeometry(0, 0, self.width(), self.height())
     def _check_gpio_input(self):
         if GPIO.input(GPIO_INPUT_PIN) == GPIO.LOW:
             print("[DEBUG] GPIO input detected, toggling black overlay.")
