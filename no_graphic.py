@@ -4,6 +4,7 @@ import cv2
 import time
 from datetime import datetime
 from typing import List, Dict
+import numpy as np
 
 class CameraFacialEmotionDetector:
     def __init__(self):
@@ -23,7 +24,7 @@ class CameraFacialEmotionDetector:
         )
         print("[DEBUG] Initialization complete.")
 
-    def detect_faces(self, frame: cv2.Mat) -> List[Dict[str, int]]:
+    def detect_faces(self, frame: np.ndarray) -> List[Dict[str, int]]:
         print("[DEBUG] Detecting faces in frame...")
         if len(frame.shape) == 3 and frame.shape[2] == 3:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -35,7 +36,7 @@ class CameraFacialEmotionDetector:
         print(f"[DEBUG] Found {len(faces)} face(s).")
         return [{'x': x, 'y': y, 'w': w, 'h': h} for (x, y, w, h) in faces]
 
-    def process_face(self, face_roi: cv2.Mat) -> Dict:
+    def process_face(self, face_roi: np.ndarray) -> Dict:
         print("[DEBUG] Processing face ROI for emotion prediction...")
         face_resized = cv2.resize(face_roi, (224, 224))
         face_rgb = cv2.cvtColor(face_resized, cv2.COLOR_BGR2RGB)
