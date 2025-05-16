@@ -27,11 +27,12 @@ import threading
 
 import RPi.GPIO as GPIO
 
+GPIO.setmode(GPIO.BCM)
 GPIO_INPUT_PIN = 21
 GPIO.setup(GPIO_INPUT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 # Setup GPIO mode and pins (choose your pins)
-GPIO.setmode(GPIO.BCM)
+
 PWM_PINS = [17, 27, 22]  # Example GPIO pins
 for pin in PWM_PINS:
     GPIO.setup(pin, GPIO.OUT)
@@ -405,7 +406,7 @@ class MainScreen(QMainWindow):
         self.stack.setCurrentWidget(self.fade_widgets[0])
         self.fade_widgets[0].set_opacity(1)
         self._start_auto_timer_for_current()
-        
+
     def _continuous_face_detection(self):
         print("[DEBUG] Starting continuous face detection thread...")
         cap = cv2.VideoCapture(0)
