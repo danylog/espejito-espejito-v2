@@ -73,6 +73,10 @@ class CameraFacialEmotionDetector:
 
         try:
             while True:
+                print("[DEBUG] Flushing camera buffer...")
+                # Grab and discard the last 5 frames to get the freshest image
+                for _ in range(5):
+                    cap.read()
                 print("[DEBUG] Capturing frame...")
                 ret, frame = cap.read()
                 if not ret:
