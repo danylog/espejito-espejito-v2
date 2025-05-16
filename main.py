@@ -28,8 +28,8 @@ import threading
 import RPi.GPIO as GPIO
 
 GPIO.setmode(GPIO.BCM)
-GPIO_INPUT_PIN = 26
-GPIO.setup(GPIO_INPUT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO_INPUT_PIN = 21
+GPIO.setup(GPIO_INPUT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 # Setup GPIO mode and pins (choose your pins)
 
