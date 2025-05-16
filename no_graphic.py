@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 from typing import List, Dict
 import numpy as np
+import os
 
 class CameraFacialEmotionDetector:
     def __init__(self):
@@ -19,9 +20,12 @@ class CameraFacialEmotionDetector:
         self.emotion_mapping = {2: 'Happy', 3: 'Normal', 4: 'Sad'}
         self.target_indices = [2, 3, 4]
         print("[DEBUG] Loading Haar cascade for face detection...")
-        self.face_cascade = cv2.CascadeClassifier(
-            cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+
+        # Robust Haar cascade path for all OpenCV installs
+        haar_path = os.path.join(
+            os.path.dirname(cv2.__file__), "data", "haarcascade_frontalface_default.xml"
         )
+        self.face_cascade = cv2.CascadeClassifier(haar_path)
         print("[DEBUG] Initialization complete.")
 
     def detect_faces(self, frame: np.ndarray) -> List[Dict[str, int]]:
@@ -75,7 +79,7 @@ class CameraFacialEmotionDetector:
         try:
             while True:
                 print("[DEBUG] Flushing camera buffer...")
-                # Grab and discard the last 5 frames to get the freshest image
+                # Grab and discard the last 10 frames to get the freshest image
                 for _ in range(10):
                     cap.read()
                 print("[DEBUG] Capturing frame...")
