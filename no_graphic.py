@@ -22,9 +22,7 @@ class CameraFacialEmotionDetector:
         print("[DEBUG] Loading Haar cascade for face detection...")
 
         # Robust Haar cascade path for all OpenCV installs
-        haar_path = os.path.join(
-            os.path.dirname(cv2.__file__), "data", "haarcascade_frontalface_default.xml"
-        )
+        haar_path = "/home/pi/haarcascade_frontalface_default.xml"
         self.face_cascade = cv2.CascadeClassifier(haar_path)
         print("[DEBUG] Initialization complete.")
 
