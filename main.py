@@ -338,6 +338,7 @@ class MainScreen(QMainWindow):
         self.black_overlay.setStyleSheet("background-color: black;")
         self.black_overlay.hide()
         self.black_overlay.setGeometry(0, 0, 1920, 1080)  # Adjust to your screen size
+        self.black_overlay.setAttribute(Qt.WA_TransparentForMouseEvents, True)
 
         # Make window full screen and windowless
         #self.setWindowFlags(Qt.FramelessWindowHint)
@@ -395,8 +396,10 @@ class MainScreen(QMainWindow):
 
     def _check_gpio_input(self):
         if GPIO.input(GPIO_INPUT_PIN) == GPIO.LOW:
+            print("[DEBUG] GPIO input detected, toggling black overlay.")
             self.black_overlay.show()
         else:
+            print("[DEBUG] GPIO input not detected, hiding black overlay.")
             if self.black_overlay.isVisible():
                 self.black_overlay.hide()
                 self.reset_program()
