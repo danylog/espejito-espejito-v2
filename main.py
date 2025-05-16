@@ -27,6 +27,9 @@ import threading
 
 import RPi.GPIO as GPIO
 
+GPIO_INPUT_PIN = 21
+GPIO.setup(GPIO_INPUT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
 # Setup GPIO mode and pins (choose your pins)
 GPIO.setmode(GPIO.BCM)
 PWM_PINS = [17, 27, 22]  # Example GPIO pins
@@ -328,6 +331,13 @@ class MainScreen(QMainWindow):
         self._scan_thread = None
         self._scan_running = False
         self.setWindowTitle("Decentralized Widget Demo")
+
+
+        self.black_overlay = QWidget(self)
+        self.black_overlay.setStyleSheet("background-color: black;")
+        self.black_overlay.hide()
+        self.black_overlay.setGeometry(0, 0, 1920, 1080)  # Adjust to your screen size
+
         # Make window full screen and windowless
         #self.setWindowFlags(Qt.FramelessWindowHint)
         #self.showFullScreen()
@@ -339,6 +349,11 @@ class MainScreen(QMainWindow):
         main_widget.setStyleSheet("background-color: #000000;")
         self.setCentralWidget(main_widget)
         main_layout = QVBoxLayout(main_widget)
+
+
+        self._gpio_timer = QTimer(self)
+        self._gpio_timer.timeout.connect(self._check_gpio_input)
+        self._gpio_timer.start(100)  # Check every 100ms
 
         self.stack = QStackedLayout()
         main_layout.addLayout(self.stack)
@@ -377,6 +392,20 @@ class MainScreen(QMainWindow):
         # Start the timer if the first widget has auto transition
         self._start_auto_timer_for_current()
 
+    def _check_gpio_input(self):
+        if GPIO.input(GPIO_INPUT_PIN) == GPIO.LOW:
+            self.black_overlay.show()
+        else:
+            if self.black_overlay.isVisible():
+                self.black_overlay.hide()
+                self.reset_program()
+    def reset_program(self):
+        # Reset to the first screen
+        self.current = 0
+        self.stack.setCurrentWidget(self.fade_widgets[0])
+        self.fade_widgets[0].set_opacity(1)
+        self._start_auto_timer_for_current()
+        
     def _continuous_face_detection(self):
         print("[DEBUG] Starting continuous face detection thread...")
         cap = cv2.VideoCapture(0)
@@ -856,24 +885,24 @@ class MainScreen(QMainWindow):
             # Example: set PWM duty cycle based on mood
             if mood == "MUY FELIZ":
                 pwms[0].ChangeDutyCycle(100)
-                pwms[1].ChangeDutyCycle(0)
-                pwms[2].ChangeDutyCycle(0)
-            elif mood == "FELIZ":
-                pwms[0].ChangeDutyCycle(70)
-                pwms[1].ChangeDutyCycle(0)
-                pwms[2].ChangeDutyCycle(0)
-            elif mood == "NORMAL":
-                pwms[0].ChangeDutyCycle(0)
-                pwms[1].ChangeDutyCycle(70)
-                pwms[2].ChangeDutyCycle(0)
-            elif mood == "TRISTE":
-                pwms[0].ChangeDutyCycle(0)
-                pwms[1].ChangeDutyCycle(0)
-                pwms[2].ChangeDutyCycle(70)
-            elif mood == "MUY TRISTE":
-                pwms[0].ChangeDutyCycle(0)
-                pwms[1].ChangeDutyCycle(0)
+                pwms[1].ChangeDutyCycle(100)
                 pwms[2].ChangeDutyCycle(100)
+            elif mood == "FELIZ":
+                pwms[0].ChangeDutyCycle(80)
+                pwms[1].ChangeDutyCycle(80)
+                pwms[2].ChangeDutyCycle(80)
+            elif mood == "NORMAL":
+                pwms[0].ChangeDutyCycle(60)
+                pwms[1].ChangeDutyCycle(60)
+                pwms[2].ChangeDutyCycle(60)
+            elif mood == "TRISTE":
+                pwms[0].ChangeDutyCycle(40)
+                pwms[1].ChangeDutyCycle(40)
+                pwms[2].ChangeDutyCycle(40)
+            elif mood == "MUY TRISTE":
+                pwms[0].ChangeDutyCycle(20)
+                pwms[1].ChangeDutyCycle(20)
+                pwms[2].ChangeDutyCycle(20)
             else:
                 for pwm in pwms:
                     pwm.ChangeDutyCycle(0)
