@@ -776,12 +776,12 @@ class MainScreen(QMainWindow):
                 print(f"  Happy: {emotions['Happy']*100:.2f}%")
                 print(f"  Normal: {emotions['Normal']*100:.2f}%")
                 print(f"  Sad: {emotions['Sad']*100:.2f}%")
-                latest_emotion = emotions
-                latest_mood = mood
+                self.latest_emotion = emotions
+                self.latest_mood = mood
             else:
                 print("[DEBUG] No faces detected in this frame.")
-                latest_emotion = None
-                latest_mood = None
+                self.latest_emotion = None
+                self.latest_mood = None
         finally:
             print("[DEBUG] Releasing camera...")
             cap.release()
@@ -847,8 +847,7 @@ class MainScreen(QMainWindow):
 
 
         def set_emotion_label_once_and_pwm():
-            mood = latest_mood if latest_mood else "NO DETECTADO"
-            
+            mood = self.latest_mood if self.latest_mood else "NO DETECTADO"            
             self.emotion_label.setText(mood)
             self.emotion_label.setStyleSheet("color: white; font-size: 75px; font-family: 'Jost'; font-weight: 200; background: transparent;")
             self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
