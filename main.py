@@ -1,5 +1,7 @@
 import sys
 import os
+import cv2
+
 from PyQt5.QtCore import QPropertyAnimation, pyqtProperty, QEasingCurve, Qt, QTimer, QRect, pyqtSignal
 from PyQt5.QtWidgets import (
     QApplication,
@@ -19,6 +21,7 @@ from PyQt5.QtGui import QFontDatabase, QFont
 import numpy as np
 from scipy.spatial import Voronoi
 from datetime import date, timedelta
+import threading
 os.environ["QT_QPA_PLATFORMTHEME"] = "fusion"
 
 
@@ -302,6 +305,12 @@ class FadeWidget(QWidget):
 class MainScreen(QMainWindow):
     def __init__(self):
         super().__init__()
+        from no_graphic import CameraFacialEmotionDetector
+        self.facial_detector = CameraFacialEmotionDetector()
+        self.latest_emotion = None
+        self.latest_mood = None
+        self._scan_thread = None
+        self._scan_running = False
         self.setWindowTitle("Decentralized Widget Demo")
         # Make window full screen and windowless
         #self.setWindowFlags(Qt.FramelessWindowHint)
@@ -674,54 +683,91 @@ class MainScreen(QMainWindow):
         fade_widget.next_widget_index = next_widget_index
 
     def create_scan_face_countdown_widget(self, next_widget_index):
-        """
-        Creates the countdown widget with a button to go back.
-        """
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
         layout = QVBoxLayout(widget)
 
-        # Add a label for the title
         label = QLabel("ESCANEANDO\nEMOCIONES", alignment=Qt.AlignCenter)
         label.setStyleSheet("color: white; font-size: 150px; font-family: 'Jost'; font-weight: 200;")
         layout.addWidget(label, alignment=Qt.AlignCenter)
 
-        # Add a label for the countdown
         self.countdown_label = QLabel("3", alignment=Qt.AlignCenter)
         self.countdown_label.setStyleSheet("color: white; font-size: 200px; font-family: 'Jost'; font-weight: 150;")
         layout.addWidget(self.countdown_label, alignment=Qt.AlignCenter)
 
         fade_widget = FadeWidget(widget)
 
-        # Create a method to start countdown when this widget becomes visible
-        def start_countdown():
-            self.countdown_value = 3  # Reset countdown
-            self.countdown_label.setText("3")  # Reset label
+        def start_countdown_and_scan():
+            self.countdown_value = 3
+            self.countdown_label.setText("3")
+            self.latest_emotion = None
+            self.latest_mood = None
+            self._scan_running = True
+            self._scan_face_found = False
 
+            # Start scanning in a thread
+            def scan_loop():
+                cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+                try:
+                    while self._scan_running:
+                        ret, frame = cap.read()
+                        if not ret:
+                            continue
+                        faces = self.facial_detector.detect_faces(frame)
+                        if faces:
+                            biggest = max(faces, key=lambda f: f['w'] * f['h'])
+                            x, y, w, h = biggest['x'], biggest['y'], biggest['w'], biggest['h']
+                            face_roi = frame[y:y+h, x:x+w]
+                            emotions = self.facial_detector.process_face(face_roi)
+                            mood = self.facial_detector.classify_mood(emotions['Happy'], emotions['Normal'], emotions['Sad'])
+                            # Save for UI update
+                            self.latest_emotion = emotions
+                            self.latest_mood = mood
+                            self._scan_face_found = True
+                            
+                            print(f"Face at (x: {x}, y: {y}, w: {w}, h: {h})")
+                            print(f"  Mood: {mood}")
+                            print(f"  Happy: {emotions['Happy']*100:.2f}%")
+                            print(f"  Normal: {emotions['Normal']*100:.2f}%")
+                            print(f"  Sad: {emotions['Sad']*100:.2f}%")
+                        # Sleep a bit to avoid 100% CPU
+                        cv2.waitKey(1)
+                finally:
+                    cap.release()
+
+            self._scan_thread = threading.Thread(target=scan_loop, daemon=True)
+            self._scan_thread.start()
+
+            # Countdown logic
             def update_countdown():
-                print(f"Current countdown value: {self.countdown_value}")
                 if self.countdown_value > 0:
                     self.countdown_label.setText(str(self.countdown_value))
                     QTimer.singleShot(1000, decrease_counter)
                 else:
-                    self.fade_to(self.current, next_widget_index)
+                    self._scan_running = False
+                    # Wait for the scan thread to finish
+                    if self._scan_thread.is_alive():
+                        self._scan_thread.join(timeout=1)
+                    QTimer.singleShot(0, lambda: self._on_scan_done(next_widget_index))
 
             def decrease_counter():
                 self.countdown_value -= 1
                 update_countdown()
 
-            # Start the countdown
             QTimer.singleShot(100, update_countdown)
 
-        # Connect the countdown start to when this widget becomes visible
-        fade_widget.visibilityChanged = start_countdown
-        
+        fade_widget.visibilityChanged = start_countdown_and_scan
         self.stack.addWidget(fade_widget)
         self.fade_widgets.append(fade_widget)
         fade_widget.auto = False
-
-
         return fade_widget
+
+    def _on_scan_done(self, next_widget_index):
+        fallback = "NO DETECTADO"
+        for fw in self.fade_widgets:
+            if hasattr(fw, "set_emotion"):
+                fw.set_emotion(self.latest_mood if self.latest_mood else fallback)
+        self.fade_to(self.current, next_widget_index)
 
     def create_deteced_emotion_widget(self, next_widget_index1, next_widget_index2):
         # Create main widget
@@ -758,6 +804,8 @@ class MainScreen(QMainWindow):
         self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         text_layout.addWidget(self.emotion_label)
         text_layout.addStretch()
+        # ...existing code...
+        
 
         
         self.saveButton = QPushButton("GUARDAR")
