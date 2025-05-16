@@ -398,6 +398,8 @@ class MainScreen(QMainWindow):
         if GPIO.input(GPIO_INPUT_PIN) == GPIO.LOW:
             print("[DEBUG] GPIO input detected, toggling black overlay.")
             self.black_overlay.show()
+            self.black_overlay.raise_()  # <-- Ensure overlay is on top
+
         else:
             print("[DEBUG] GPIO input not detected, hiding black overlay.")
             if self.black_overlay.isVisible():
