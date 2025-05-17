@@ -202,7 +202,7 @@ class VoronoiWidget(QWidget):
         self.b = 86
         super().__init__(parent)
         self.setStyleSheet("background-color: #000000;")
-        self.setFixedSize(1920, 800)
+        self.setFixedSize(800, 480)
         
         # Initialize data structures
         self.points = []
@@ -345,7 +345,7 @@ class MainScreen(QMainWindow):
         self.black_overlay = QWidget(self)
         self.black_overlay.setStyleSheet("background-color: black;")
         self.black_overlay.hide()
-        self.black_overlay.setGeometry(0, 0, 1920, 1080)  # Adjust to your screen size
+        self.black_overlay.setGeometry(0, 0, 800, 480)  # Adjust to your screen size
         self.black_overlay.setAttribute(Qt.WA_TransparentForMouseEvents, True)
 
         # Make window full screen and windowless
