@@ -925,7 +925,7 @@ class MainScreen(QMainWindow):
         
 
         voronoi_label = QLabel()
-        voronoi_label.setFixedSize(1800, 800)
+        voronoi_label.setFixedSize(800, 320)
         layout.addWidget(voronoi_label)
 
         voronoi = VoronoiWidget(parent=None, num_points=2500, edges_per_tick=500)
