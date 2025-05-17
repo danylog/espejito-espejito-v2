@@ -879,83 +879,46 @@ class MainScreen(QMainWindow):
         self.fade_to(self.current, next_widget_index)
 
     def create_deteced_emotion_widget(self, next_widget_index1, next_widget_index2):
-        # Create main widget
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
-        
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-        
-        self.emotion_label = QLabel()
-        layout.addWidget(self.emotion_label)
+        layout.setContentsMargins(10, 10, 10, 10)
 
-
-        def set_emotion_label_once_and_pwm():
-            mood = self.latest_mood if self.latest_mood else "NO DETECTADO"            
-            self.emotion_label.setText(mood)
-            self.emotion_label.setStyleSheet("color: white; font-size: 36px; font-family: 'Jost'; font-weight: 200; background: transparent;")
-            self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-            text_layout.addWidget(self.emotion_label)
-            text_layout.addStretch()
-            # Example: set PWM duty cycle based on mood
-            if mood == "MUY FELIZ":
-                pwms[0].ChangeDutyCycle(100)
-                pwms[1].ChangeDutyCycle(100)
-                pwms[2].ChangeDutyCycle(100)
-            elif mood == "FELIZ":
-                pwms[0].ChangeDutyCycle(80)
-                pwms[1].ChangeDutyCycle(80)
-                pwms[2].ChangeDutyCycle(80)
-            elif mood == "NORMAL":
-                pwms[0].ChangeDutyCycle(60)
-                pwms[1].ChangeDutyCycle(60)
-                pwms[2].ChangeDutyCycle(60)
-            elif mood == "TRISTE":
-                pwms[0].ChangeDutyCycle(40)
-                pwms[1].ChangeDutyCycle(40)
-                pwms[2].ChangeDutyCycle(40)
-            elif mood == "MUY TRISTE":
-                pwms[0].ChangeDutyCycle(20)
-                pwms[1].ChangeDutyCycle(20)
-                pwms[2].ChangeDutyCycle(20)
-            else:
-                for pwm in pwms:
-                    pwm.ChangeDutyCycle(0)
-
-        
-
+        # Voronoi
         voronoi_label = QLabel()
-        voronoi_label.setFixedSize(600, 300)
+        voronoi_label.setFixedSize(400, 160)
         layout.addWidget(voronoi_label)
 
-        voronoi = VoronoiWidget(parent=None, num_points=2500, edges_per_tick=500)
+        voronoi = VoronoiWidget(parent=None, num_points=600, edges_per_tick=100)
 
-        # --- Overlay text container ---
+        # Overlay text container
         text_container = QWidget(voronoi_label)
         text_container.setStyleSheet("background: transparent;")
-        text_container.setGeometry(0, 0, 1600, 800)
+        text_container.setGeometry(0, 0, 400, 160)
         text_layout = QVBoxLayout(text_container)
-        text_layout.setContentsMargins(100, 20, 0, 0)  # Adjust as needed
+        text_layout.setContentsMargins(10, 5, 0, 0)
 
         # Title label
         title_label = QLabel("ESTADO DE ÁNIMO\nDETECTADO:")
-        title_label.setStyleSheet("color: white; font-size: 48px; font-family: 'Jost'; font-weight: 200; background: transparent;")
+        title_label.setStyleSheet("color: white; font-size: 24px; font-family: 'Jost'; font-weight: 200; background: transparent;")
         title_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         text_layout.addWidget(title_label)
 
-        # Dynamic emotion label (set only once when widget is shown)
-
-
+        # Emotion label
+        self.emotion_label = QLabel()
+        self.emotion_label.setStyleSheet("color: white; font-size: 28px; font-family: 'Jost'; font-weight: 200; background: transparent;")
+        self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        text_layout.addWidget(self.emotion_label)
+        text_layout.addStretch()
 
         # Buttons
         self.saveButton = QPushButton("GUARDAR")
-        self.saveButton.setStyleSheet("background-color: #000; color: white; margin-left: 20px; font-size: 32px; font-family: 'Jost'; font-weight: 100;")
+        self.saveButton.setStyleSheet("background-color: #000; color: white; margin-left: 10px; font-size: 20px; font-family: 'Jost'; font-weight: 100;")
         self.tryButton = QPushButton("REINTENTAR")
-        self.tryButton.setStyleSheet("background-color: #000; color: white; font-size: 32px; font-family: 'Jost'; font-weight: 100;")
+        self.tryButton.setStyleSheet("background-color: #000; color: white; font-size: 20px; font-family: 'Jost'; font-weight: 100;")
         button_layout = QHBoxLayout()
         button_layout.addStretch()
         button_layout.addWidget(self.tryButton)
-        # --- GUARDAR button with underline ---
         guardar_container = QVBoxLayout()
         guardar_container.setSpacing(0)
         guardar_container.setContentsMargins(0, 0, 0, 0)
@@ -963,11 +926,9 @@ class MainScreen(QMainWindow):
         guardar_underline = QFrame()
         guardar_underline.setFrameShape(QFrame.HLine)
         guardar_underline.setFrameShadow(QFrame.Plain)
-        guardar_underline.setStyleSheet("background-color: orange; margin-left: 20px;")
-        guardar_underline.setFixedHeight(6)
+        guardar_underline.setStyleSheet("background-color: orange; margin-left: 10px;")
+        guardar_underline.setFixedHeight(3)
         guardar_container.addWidget(guardar_underline)
-
-        # --- REINTENTAR button with underline ---
         reintentar_container = QVBoxLayout()
         reintentar_container.setSpacing(0)
         reintentar_container.setContentsMargins(0, 0, 0, 0)
@@ -976,35 +937,27 @@ class MainScreen(QMainWindow):
         reintentar_underline.setFrameShape(QFrame.HLine)
         reintentar_underline.setFrameShadow(QFrame.Plain)
         reintentar_underline.setStyleSheet("background-color: orange;")
-        reintentar_underline.setFixedHeight(6)
+        reintentar_underline.setFixedHeight(3)
         reintentar_container.addWidget(reintentar_underline)
-
-        # --- Horizontal layout for both buttons ---
         button_layout = QHBoxLayout()
         button_layout.addStretch()
         button_layout.addLayout(reintentar_container)
-        button_layout.addSpacing(40)  # Space between buttons
+        button_layout.addSpacing(10)
         button_layout.addLayout(guardar_container)
         text_layout.addLayout(button_layout)
 
-        # --- Voronoi rendering logic ---
+        # Voronoi rendering logic
         def update_voronoi():
             pixmap = QPixmap(voronoi_label.size())
             pixmap.fill(Qt.black)
             voronoi.render(pixmap)
             voronoi_label.setPixmap(pixmap)
-
         voronoi.update = update_voronoi
 
         fade_widget = FadeWidget(widget)
-        fade_widget.visibilityChanged = lambda: (set_emotion_label_once_and_pwm(), voronoi.start_animation())
+        fade_widget.visibilityChanged = lambda: (self.emotion_label.setText(self.latest_mood if self.latest_mood else "NO DETECTADO"), voronoi.start_animation())
         self.stack.addWidget(fade_widget)
         self.fade_widgets.append(fade_widget)
-
-        # Set the emotion label only once when the widget is shown
-        def set_emotion_label_once():
-            self.emotion_label.setText(self.latest_mood if self.latest_mood else "NO DETECTADO")
-
 
         fade_widget.auto = False
         fade_widget.duration = 0
@@ -1012,7 +965,6 @@ class MainScreen(QMainWindow):
         self.tryButton.clicked.connect(lambda: self.fade_to(self.current, next_widget_index2))
 
         return fade_widget
-
     def create_describe_emotion_widget(self, next_widget_index):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
