@@ -53,7 +53,7 @@ class StatisticsChart(QWidget):
     day_clicked = pyqtSignal(int)  # index in self.data
     def __init__(self, parent=None, start_date=None, title_label=None):
         super().__init__(parent)
-        self.setMinimumSize(1200, 650)
+        self.setMinimumSize(600, 300)
         self.setStyleSheet("background: transparent;")
         # Use float values for more precise mood positions
         self.data = [
@@ -487,7 +487,7 @@ class MainScreen(QMainWindow):
 
         label = QLabel("LO QUE SIENTES\nIMPORTA", alignment=Qt.AlignCenter)
 
-        label.setStyleSheet(f"color: white; font-size: 150px; font-family: '{jostLight}';")
+        label.setStyleSheet(f"color: white; font-size: 48px; font-family: '{jostLight}';")
         layout.addWidget(label)
 
         fade_widget = FadeWidget(widget)
@@ -517,11 +517,11 @@ class MainScreen(QMainWindow):
             jostExtraLight = QFontDatabase.applicationFontFamilies(font_id1)[0]
             print("Loaded font family:", jostExtraLight)
 
-        label1.setStyleSheet(f"color: white; font-size: 75px; font-family: 'Jost'; font-weight: 200;")
+        label1.setStyleSheet(f"color: white; font-size: 36px; font-family: 'Jost'; font-weight: 200;")
         layout.addWidget(label1)
 
         button = QPushButton("ESCANEAR ESTADO EMOCIONAL")
-        button.setStyleSheet("background-color: #000; color: white; font-size: 50px; font-family: 'Jost'; font-weight: 150; border-bottom: 40px solid white;")
+        button.setStyleSheet("background-color: #000; color: white; font-size: 32px; font-family: 'Jost'; font-weight: 150; border-bottom: 40px solid white;")
         layout.addWidget(button, alignment=Qt.AlignLeft)
                 
         line = QFrame()
@@ -573,7 +573,7 @@ class MainScreen(QMainWindow):
         layout.setContentsMargins(80, 80, 80, 80)
 
         title = QLabel("TUS CONTACTOS")
-        title.setStyleSheet("color: white; font-size: 90px; font-family: 'Jost'; font-weight: 200;")
+        title.setStyleSheet("color: white; font-size: 36px; font-family: 'Jost'; font-weight: 200;")
         title.setAlignment(Qt.AlignLeft)
         layout.addWidget(title)
         layout.addSpacing(40)
@@ -627,7 +627,7 @@ class MainScreen(QMainWindow):
         layout.setContentsMargins(80, 80, 80, 80)
 
         title = QLabel("¿CON QUIÉN QUIERES COMPARTIRLO?")
-        title.setStyleSheet("color: white; font-size: 90px; font-family: 'Jost'; font-weight: 200;")
+        title.setStyleSheet("color: white; font-size: 36px; font-family: 'Jost'; font-weight: 200;")
         title.setAlignment(Qt.AlignLeft)
         layout.addWidget(title)
         layout.addSpacing(40)
@@ -703,7 +703,7 @@ class MainScreen(QMainWindow):
 
         # Title
         title = QLabel("¿TE GUSTARÍA\nCOMPARTIRLO CON\nTUS CONTACTOS?")
-        title.setStyleSheet("color: white; font-size: 100px; font-family: 'Jost'; font-weight: 200;")
+        title.setStyleSheet("color: white; font-size: 40px; font-family: 'Jost'; font-weight: 200;")
         title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         layout.addWidget(title)
         layout.addStretch()
@@ -764,7 +764,7 @@ class MainScreen(QMainWindow):
         layout = QVBoxLayout(widget)
 
         label = QLabel("MUESTRA CON TU\nROSTRO CÓMO TE\nSIENTES", alignment=Qt.AlignCenter)
-        label.setStyleSheet("color: white; font-size: 150px; font-family: 'Jost'; font-weight: 200;")
+        label.setStyleSheet("color: white; font-size: 48px; font-family: 'Jost'; font-weight: 200;")
         layout.addWidget(label, alignment=Qt.AlignCenter)
 
 
@@ -836,7 +836,7 @@ class MainScreen(QMainWindow):
         layout = QVBoxLayout(widget)
 
         label = QLabel("ESCANEANDO\nEMOCIONES", alignment=Qt.AlignCenter)
-        label.setStyleSheet("color: white; font-size: 150px; font-family: 'Jost'; font-weight: 200;")
+        label.setStyleSheet("color: white; font-size: 48px; font-family: 'Jost'; font-weight: 200;")
         layout.addWidget(label, alignment=Qt.AlignCenter)
 
         self.countdown_label = QLabel("3", alignment=Qt.AlignCenter)
@@ -893,7 +893,7 @@ class MainScreen(QMainWindow):
         def set_emotion_label_once_and_pwm():
             mood = self.latest_mood if self.latest_mood else "NO DETECTADO"            
             self.emotion_label.setText(mood)
-            self.emotion_label.setStyleSheet("color: white; font-size: 75px; font-family: 'Jost'; font-weight: 200; background: transparent;")
+            self.emotion_label.setStyleSheet("color: white; font-size: 36px; font-family: 'Jost'; font-weight: 200; background: transparent;")
             self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
             text_layout.addWidget(self.emotion_label)
             text_layout.addStretch()
@@ -939,7 +939,7 @@ class MainScreen(QMainWindow):
 
         # Title label
         title_label = QLabel("ESTADO DE ÁNIMO\nDETECTADO:")
-        title_label.setStyleSheet("color: white; font-size: 150px; font-family: 'Jost'; font-weight: 200; background: transparent;")
+        title_label.setStyleSheet("color: white; font-size: 48px; font-family: 'Jost'; font-weight: 200; background: transparent;")
         title_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         text_layout.addWidget(title_label)
 
@@ -949,9 +949,9 @@ class MainScreen(QMainWindow):
 
         # Buttons
         self.saveButton = QPushButton("GUARDAR")
-        self.saveButton.setStyleSheet("background-color: #000; color: white; margin-left: 100px; font-size: 50px; font-family: 'Jost'; font-weight: 100;")
+        self.saveButton.setStyleSheet("background-color: #000; color: white; margin-left: 20px; font-size: 32px; font-family: 'Jost'; font-weight: 100;")
         self.tryButton = QPushButton("REINTENTAR")
-        self.tryButton.setStyleSheet("background-color: #000; color: white; font-size: 50px; font-family: 'Jost'; font-weight: 100;")
+        self.tryButton.setStyleSheet("background-color: #000; color: white; font-size: 32px; font-family: 'Jost'; font-weight: 100;")
         button_layout = QHBoxLayout()
         button_layout.addStretch()
         button_layout.addWidget(self.tryButton)
@@ -963,7 +963,7 @@ class MainScreen(QMainWindow):
         guardar_underline = QFrame()
         guardar_underline.setFrameShape(QFrame.HLine)
         guardar_underline.setFrameShadow(QFrame.Plain)
-        guardar_underline.setStyleSheet("background-color: orange; margin-left: 100px;")
+        guardar_underline.setStyleSheet("background-color: orange; margin-left: 20px;")
         guardar_underline.setFixedHeight(6)
         guardar_container.addWidget(guardar_underline)
 
@@ -1021,7 +1021,7 @@ class MainScreen(QMainWindow):
 
         # Title
         title = QLabel("¿CÓMO DESCRIBIRÍAS\nLO QUE SIENTES?")
-        title.setStyleSheet("color: white; font-size: 70px; margin-left: 100px;  font-family: 'Jost'; font-weight: 200;")
+        title.setStyleSheet("color: white; font-size: 70px; margin-left: 20px;  font-family: 'Jost'; font-weight: 200;")
         title.setAlignment(Qt.AlignLeft)
         layout.addWidget(title)
         layout.addSpacing(20)
@@ -1111,7 +1111,7 @@ class MainScreen(QMainWindow):
 
         # Title
         title = QLabel("¿CUÁLES SON LOS\nMOTIVOS?")
-        title.setStyleSheet("color: white; font-size: 90px; margin-left: 100px; font-family: 'Jost'; font-weight: 200;")
+        title.setStyleSheet("color: white; font-size: 90px; margin-left: 20px; font-family: 'Jost'; font-weight: 200;")
         title.setAlignment(Qt.AlignLeft)
         layout.addWidget(title)
         layout.addSpacing(40)
@@ -1195,7 +1195,7 @@ class MainScreen(QMainWindow):
 
         # Title
         title = QLabel("¿TE GUSTARÍA\nCOMPARTIRLO CON\nTUS CONTACTOS?")
-        title.setStyleSheet("color: white; font-size: 100px; font-family: 'Jost'; font-weight: 200;")
+        title.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200;")
         title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         layout.addWidget(title)
         layout.addStretch()
