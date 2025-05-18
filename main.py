@@ -43,7 +43,7 @@ from PyQt5.QtGui import QCursor
 
 if ON_RPI:
     GPIO_INPUT_PIN = 21
-    PWM_PIN = 12  # Use GPIO12 for PWM
+    PWM_PIN = 15  # Use GPIO12 for PWM
     pi.set_PWM_frequency(PWM_PIN, 1000)  # 1kHz
     pi.set_PWM_dutycycle(PWM_PIN, 0)     # Start with 0% duty cycle
     pi.set_mode(GPIO_INPUT_PIN, pigpio.INPUT)
@@ -417,7 +417,7 @@ class MainScreen(QMainWindow):
     #     self.black_overlay.setGeometry(0, 0, self.width(), self.height())
     def _check_gpio_input(self):
         if ON_RPI:
-            if GPIO.input(GPIO_INPUT_PIN) == GPIO.LOW:
+            if pi.read(GPIO_INPUT_PIN) == 0:
                 print("[DEBUG] GPIO input detected, toggling black overlay.")
                 pwm.ChangeDutyCycle(0);
 
