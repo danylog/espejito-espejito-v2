@@ -1,66 +1,97 @@
 import cv2
 import numpy as np
+import os
+import time
+from datetime import datetime
+from typing import List, Dict
+
 from tensorflow.keras.models import load_model
 
-# Load model
-model = load_model("emotion_model.hdf5")  # Replace with actual path
+class CameraFacialEmotionDetector:
+    MODEL_PATH = "emotion_model.hdf5"  # <-- your .h5 Keras model here
+    FACE_SIZE = (64, 64)
 
-# FER2013 standard emotion order
-EMOTIONS = ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"]
+    def __init__(self):
+        print("[DEBUG] Loading emotion Keras model from:", self.MODEL_PATH)
+        self.model = load_model(self.MODEL_PATH, compile=False)
+        print("[DEBUG] Loading Haar cascade for face detection...")
+        haar_path = (
+            "/home/pi/haarcascade_frontalface_default.xml"
+            if os.path.exists("/home/pi/haarcascade_frontalface_default.xml")
+            else cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+        )
+        self.face_cascade = cv2.CascadeClassifier(haar_path)
+        print("[DEBUG] Initialization complete.")
 
-# Mapped emotions: reduce to Happy, Neutral, Sad
-def map_emotions(predictions):
-    mapped = {
-        "Happy": predictions[3],
-        "Neutral": predictions[6],
-        "Sad": predictions[0] + predictions[2] + predictions[4],  # Angry + Fear + Sad
-    }
-    return mapped
+    def detect_faces(self, frame: np.ndarray) -> List[Dict[str, int]]:
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = self.face_cascade.detectMultiScale(
+            gray, scaleFactor=1.1, minNeighbors=3, minSize=(48, 48)
+        )
+        return [{'x': x, 'y': y, 'w': w, 'h': h} for (x, y, w, h) in faces]
 
-# Face detection
-face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    def process_face(self, face_roi: np.ndarray) -> Dict[str, float]:
+        gray = cv2.cvtColor(face_roi, cv2.COLOR_BGR2GRAY)
+        resized = cv2.resize(gray, self.FACE_SIZE)
+        normalized = resized.astype("float32") / 255.0
+        reshaped = np.reshape(normalized, (1, 64, 64, 1))
 
-def preprocess_face(face_image):
-    gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
-    resized = cv2.resize(gray, (64, 64))
-    normalized = resized.astype("float32") / 255.0
-    reshaped = np.reshape(normalized, (1, 64, 64, 1))
-    return reshaped
+        preds = self.model.predict(reshaped, verbose=0)[0]  # FER2013: [Angry, Disgust, Fear, Happy, Sad, Surprise, Neutral]
 
-# Start webcam
-cap = cv2.VideoCapture(0)
+        happy = preds[3]
+        normal = preds[6]
+        sad = preds[2] + preds[4]  # Fear + Sad (adjust if needed)
+        total = happy + normal + sad
+        if total > 0:
+            happy /= total
+            normal /= total
+            sad /= total
+        return {
+            'Happy': float(happy),
+            'Normal': float(normal),
+            'Sad': float(sad),
+        }
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+    def classify_mood(self, happy, normal, sad) -> str:
+        # New thresholds based on your provided values
+        if happy >= 0.55:
+            return "MUY FELIZ"
+        elif happy >= 0.12 and sad < 0.4:
+            return "FELIZ"
+        elif happy < 0.05 and sad > 0.6:
+            return "TRISTE"
+        elif happy < 0.05 and sad > 0.5:
+            return "MUY TRISTE"
+        else:
+            return "NORMAL"
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_detector.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+    def analyze_camera_feed(self):
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            raise RuntimeError("Cannot open camera")
+        try:
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                frame = cv2.resize(frame, (320, 240))
+                faces = self.detect_faces(frame)
+                timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
-    for (x, y, w, h) in faces:
-        face = frame[y:y+h, x:x+w]
-        input_face = preprocess_face(face)
+                if faces:
+                    f = max(faces, key=lambda r: r['w'] * r['h'])
+                    x, y, w, h = f['x'], f['y'], f['w'], f['h']
+                    face_roi = frame[y:y+h, x:x+w]
+                    emo = self.process_face(face_roi)
+                    mood = self.classify_mood(emo['Happy'], emo['Normal'], emo['Sad'])
+                    print(f"{timestamp} | {mood} | H:{emo['Happy']:.2f} N:{emo['Normal']:.2f} S:{emo['Sad']:.2f}")
+                else:
+                    print(f"{timestamp} | No face detected")
+                time.sleep(1)
+        finally:
+            cap.release()
 
-        predictions = model.predict(input_face)[0]
-        mapped = map_emotions(predictions)
-
-        # Normalize to percentages
-        total = sum(mapped.values())
-        percentages = {k: round((v / total) * 100, 2) for k, v in mapped.items()}
-        
-        # Show result in terminal
-        print(f"[Percentages] Happy: {percentages['Happy']}% | Neutral: {percentages['Neutral']}% | Sad: {percentages['Sad']}%")
-
-        # Display main emotion on video
-        main_emotion = max(percentages, key=percentages.get)
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-        cv2.putText(frame, main_emotion, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-
-    cv2.imshow("Emotion Detection", frame)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    detector = CameraFacialEmotionDetector()
+    print("Press 'q' to exit.")
+    detector.analyze_camera_feed()
