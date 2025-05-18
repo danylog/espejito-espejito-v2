@@ -597,7 +597,7 @@ class MainScreen(QMainWindow):
 
         # Fullscreen image (replace 'contacts.png' with your image file)
         image_label = QLabel()
-        image_label.setPixmap(QPixmap("contacts.png").scaled(800, 480, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+        image_label.setPixmap(QPixmap("contactos.png").scaled(800, 480, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
         image_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(image_label)
 
@@ -1058,7 +1058,7 @@ class MainScreen(QMainWindow):
         def reset_emotion_selection():
             self.selected_emotion.clear()
             for btn in self.emotion_buttons:
-                btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+                btn.setStyleSheet("color: white; font-size: 25px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
         fade_widget.visibilityChanged = reset_emotion_selection
     
     def create_cause_emotion_widget(self, next_widget_index):
@@ -1149,7 +1149,7 @@ class MainScreen(QMainWindow):
             self.selected_motives.clear()
             for btn in self.motive_buttons:  
                 btn.setChecked(False)
-                btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+                btn.setStyleSheet("color: white; font-size: 25px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
         fade_widget.visibilityChanged = reset_motive_selection
     def create_send_to_contacts_widget(self, next_widget_index_si, next_widget_index_no):
         widget = QWidget()
