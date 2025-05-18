@@ -834,18 +834,17 @@ class MainScreen(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Voronoi
-        voronoi_label = QLabel()
-        voronoi_label.setFixedSize(800, 480)
-        layout.addWidget(voronoi_label)
-        # Default values, will be updated on visibility
-        self.voronoi = VoronoiWidget(voronoi_label, num_points=1000, edges_per_tick=100)
+        # Initial Voronoi label
+        self.voronoi_label = QLabel()
+        self.voronoi_label.setFixedSize(800, 480)
+        layout.addWidget(self.voronoi_label)
+        self.voronoi = VoronoiWidget(self.voronoi_label, num_points=1000, edges_per_tick=100)
 
         # Overlay text container (fills the Voronoi area)
-        text_container = QWidget(voronoi_label)
-        text_container.setStyleSheet("background: transparent;")
-        text_container.setGeometry(0, 0, 800, 480)
-        text_layout = QVBoxLayout(text_container)
+        self.text_container = QWidget(self.voronoi_label)
+        self.text_container.setStyleSheet("background: transparent;")
+        self.text_container.setGeometry(0, 0, 800, 480)
+        text_layout = QVBoxLayout(self.text_container)
         text_layout.setContentsMargins(30, 30, 30, 30)
 
         # Title label
@@ -900,21 +899,18 @@ class MainScreen(QMainWindow):
 
         # Voronoi rendering logic
         def update_voronoi():
-            pixmap = QPixmap(voronoi_label.size())
+            pixmap = QPixmap(self.voronoi_label.size())
             pixmap.fill(Qt.black)
             self.voronoi.render(pixmap)
-            voronoi_label.setPixmap(pixmap)
+            self.voronoi_label.setPixmap(pixmap)
         self.voronoi.update = update_voronoi
 
         fade_widget = FadeWidget(widget)
 
         def on_visibility():
-            # Set emotion label and start animation
             mood = self.latest_mood if self.latest_mood else "NO DETECTADO"
             self.emotion_label.setText(mood)
 
-            # --- Voronoi animation parameters based on mood ---
-            # You can tune these values as you wish
             voronoi_params = {
                 "MUY FELIZ":   {"num_points": 250, "edges_per_tick": 50},
                 "FELIZ":       {"num_points": 200, "edges_per_tick": 40},
@@ -924,23 +920,25 @@ class MainScreen(QMainWindow):
             }
             params = voronoi_params.get(mood, {"num_points": 700, "edges_per_tick": 60})
 
-            # Re-create the VoronoiWidget with new parameters
-            # Remove old widget from layout
-            layout.removeWidget(voronoi_label)
-            voronoi_label.deleteLater()
-            new_voronoi_label = QLabel()
-            new_voronoi_label.setFixedSize(800, 480)
-            layout.insertWidget(0, new_voronoi_label)
-            self.voronoi = VoronoiWidget(new_voronoi_label, num_points=params["num_points"], edges_per_tick=params["edges_per_tick"])
+            # Remove old Voronoi label and overlay
+            layout.removeWidget(self.voronoi_label)
+            self.voronoi_label.deleteLater()
 
-            # Re-attach overlay and update logic
-            text_container.setParent(new_voronoi_label)
-            text_container.setGeometry(0, 0, 800, 480)
+            # Create new Voronoi label
+            self.voronoi_label = QLabel()
+            self.voronoi_label.setFixedSize(800, 480)
+            layout.insertWidget(0, self.voronoi_label)
+            self.voronoi = VoronoiWidget(self.voronoi_label, num_points=params["num_points"], edges_per_tick=params["edges_per_tick"])
+
+            # Re-attach overlay to new label
+            self.text_container.setParent(self.voronoi_label)
+            self.text_container.setGeometry(0, 0, 800, 480)
+
             def update_voronoi_new():
-                pixmap = QPixmap(new_voronoi_label.size())
+                pixmap = QPixmap(self.voronoi_label.size())
                 pixmap.fill(Qt.black)
                 self.voronoi.render(pixmap)
-                new_voronoi_label.setPixmap(pixmap)
+                self.voronoi_label.setPixmap(pixmap)
             self.voronoi.update = update_voronoi_new
 
             self.voronoi.start_animation()
