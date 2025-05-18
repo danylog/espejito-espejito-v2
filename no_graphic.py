@@ -43,7 +43,7 @@ class CameraFacialEmotionDetector:
 
     def process_face(self, face_roi: np.ndarray) -> Dict:
         print("[DEBUG] Processing face ROI for emotion prediction...")
-        face_resized = cv2.resize(face_roi, (224, 224))
+        face_resized = cv2.resize(face_roi, (96, 96))
         face_rgb = cv2.cvtColor(face_resized, cv2.COLOR_BGR2RGB)
         inputs = self.processor(images=[face_rgb], return_tensors="pt")
         with torch.no_grad():
@@ -91,6 +91,7 @@ class CameraFacialEmotionDetector:
 
                 frame = cv2.resize(frame, (320, 240))
                 faces = self.detect_faces(frame)
+                timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
                 if faces:
                     biggest = max(faces, key=lambda f: f['w'] * f['h'])
                     x, y, w, h = biggest['x'], biggest['y'], biggest['w'], biggest['h']
@@ -98,16 +99,17 @@ class CameraFacialEmotionDetector:
                     face_roi = frame[y:y+h, x:x+w]
                     emotions = self.process_face(face_roi)
                     mood = self.classify_mood(emotions['Happy'], emotions['Normal'], emotions['Sad'])
-                    timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
                     print(f"Timestamp: {timestamp}")
                     print(f"Face at (x: {x}, y: {y}, w: {w}, h: {h})")
                     print(f"  Mood: {mood}")
                     print(f"  Happy: {emotions['Happy']*100:.2f}%")
                     print(f"  Normal: {emotions['Normal']*100:.2f}%")
                     print(f"  Sad: {emotions['Sad']*100:.2f}%")
+                    # --- Send or store the timestamp with the detected emotion here ---
+                    # Example: save to a list or send to a server
+                    # detected_data.append({'timestamp': timestamp, 'mood': mood, 'emotions': emotions})
                 else:
-                    print("[DEBUG] No faces detected in this frame.")
-                time.sleep(1)
+                    print(f"[DEBUG] No faces detected in this frame. Timestamp: {timestamp}")
         finally:
             print("[DEBUG] Releasing camera...")
             cap.release()
