@@ -5,15 +5,18 @@ import time
 from datetime import datetime
 from typing import List, Dict
 
-from tensorflow.keras.models import load_model
+import tflite_runtime.interpreter as tflite
 
 class CameraFacialEmotionDetector:
-    MODEL_PATH = "emotion_model.hdf5"  # <-- your .hdf5 here
+    MODEL_PATH = "model.tflite"  # <-- your .tflite here
     FACE_SIZE = (64, 64)
 
     def __init__(self):
-        print("[DEBUG] Loading emotion CNN from:", self.MODEL_PATH)
-        self.model = load_model(self.MODEL_PATH, compile=False)
+        print("[DEBUG] Loading emotion TFLite model from:", self.MODEL_PATH)
+        self.interpreter = tflite.Interpreter(model_path=self.MODEL_PATH)
+        self.interpreter.allocate_tensors()
+        self.input_details = self.interpreter.get_input_details()
+        self.output_details = self.interpreter.get_output_details()
         print("[DEBUG] Loading Haar cascade for face detection...")
         haar_path = (
             "/home/pi/haarcascade_frontalface_default.xml"
@@ -31,19 +34,20 @@ class CameraFacialEmotionDetector:
         return [{'x': x, 'y': y, 'w': w, 'h': h} for (x, y, w, h) in faces]
 
     def process_face(self, face_roi: np.ndarray) -> Dict[str, float]:
-        # 1. Preprocess face as in internet_fer.py
         gray = cv2.cvtColor(face_roi, cv2.COLOR_BGR2GRAY)
         resized = cv2.resize(gray, self.FACE_SIZE)
         normalized = resized.astype("float32") / 255.0
         reshaped = np.reshape(normalized, (1, 64, 64, 1))
-        # 2. Predict
-        preds = self.model.predict(reshaped, verbose=0)[0]  # FER2013: [Angry, Disgust, Fear, Happy, Sad, Surprise, Neutral]
-        # 3. Map to Happy, Normal, Sad as in internet_fer.py
+
+        # Set tensor
+        self.interpreter.set_tensor(self.input_details[0]['index'], reshaped.astype(self.input_details[0]['dtype']))
+        self.interpreter.invoke()
+        preds = self.interpreter.get_tensor(self.output_details[0]['index'])[0]  # FER2013: [Angry, Disgust, Fear, Happy, Sad, Surprise, Neutral]
+
         happy = preds[3]
         normal = preds[6]
-        sad = preds[2] + preds[4]  # Angry + Fear + Sad
+        sad = preds[2] + preds[4]  # Fear + Sad (adjust if needed)
         total = happy + normal + sad
-        # Normalize to sum to 1
         if total > 0:
             happy /= total
             normal /= total
@@ -68,39 +72,25 @@ class CameraFacialEmotionDetector:
             raise RuntimeError("Cannot open camera")
         try:
             while True:
-                # capture & resize for speed
                 ret, frame = cap.read()
                 if not ret:
                     break
                 frame = cv2.resize(frame, (320, 240))
-
-                # detect faces
                 faces = self.detect_faces(frame)
                 timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
                 if faces:
-                    # pick largest
                     f = max(faces, key=lambda r: r['w'] * r['h'])
                     x, y, w, h = f['x'], f['y'], f['w'], f['h']
                     face_roi = frame[y:y+h, x:x+w]
-
-                    # predict
                     emo = self.process_face(face_roi)
                     mood = self.classify_mood(emo['Happy'], emo['Normal'], emo['Sad'])
-
-                    # log only to console
                     print(f"{timestamp} | {mood} | H:{emo['Happy']:.2f} N:{emo['Normal']:.2f} S:{emo['Sad']:.2f}")
-
                 else:
                     print(f"{timestamp} | No face detected")
-
-                # Remove display code for headless/console use
-                time.sleep(1)  # Optional: slow down loop if needed
+                time.sleep(1)
         finally:
             cap.release()
-
-
-
 
 if __name__ == "__main__":
     detector = CameraFacialEmotionDetector()
