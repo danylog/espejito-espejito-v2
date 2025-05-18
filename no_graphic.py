@@ -1,125 +1,108 @@
-from transformers import AutoImageProcessor, AutoModelForImageClassification
-import torch
 import cv2
+import numpy as np
+import os
 import time
 from datetime import datetime
 from typing import List, Dict
-import numpy as np
-import os
+
+from tensorflow.keras.models import load_model
 
 class CameraFacialEmotionDetector:
-    def __init__(self):
-        print("[DEBUG] Initializing processor and model...")
-        self.processor = AutoImageProcessor.from_pretrained(
-            "prithivMLmods/Facial-Emotion-Detection-SigLIP2", use_fast=False
-        )
-        self.model = AutoModelForImageClassification.from_pretrained(
-            "prithivMLmods/Facial-Emotion-Detection-SigLIP2"
-        )
-        self.model.eval()
-        self.emotion_mapping = {2: 'Happy', 3: 'Normal', 4: 'Sad'}
-        self.target_indices = [2, 3, 4]
-        print("[DEBUG] Loading Haar cascade for face detection...")
+    MODEL_PATH = "emotion_model.hdf5"  # <-- your .hdf5 here
+    FACE_SIZE = (64, 64)
 
-        # Robust Haar cascade path for all OpenCV installs
-        if os.path.exists("/home/pi/haarcascade_frontalface_default.xml"):
-            haar_path = "/home/pi/haarcascade_frontalface_default.xml"
-        else:
-            haar_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    def __init__(self):
+        print("[DEBUG] Loading emotion CNN from:", self.MODEL_PATH)
+        self.model = load_model(self.MODEL_PATH, compile=False)
+        print("[DEBUG] Loading Haar cascade for face detection...")
+        haar_path = (
+            "/home/pi/haarcascade_frontalface_default.xml"
+            if os.path.exists("/home/pi/haarcascade_frontalface_default.xml")
+            else cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+        )
         self.face_cascade = cv2.CascadeClassifier(haar_path)
         print("[DEBUG] Initialization complete.")
 
     def detect_faces(self, frame: np.ndarray) -> List[Dict[str, int]]:
-        print("[DEBUG] Detecting faces in frame...")
-        if len(frame.shape) == 3 and frame.shape[2] == 3:
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        else:
-            gray = frame  # Already grayscale
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = self.face_cascade.detectMultiScale(
             gray, scaleFactor=1.1, minNeighbors=3, minSize=(48, 48)
         )
-        print(f"[DEBUG] Found {len(faces)} face(s).")
         return [{'x': x, 'y': y, 'w': w, 'h': h} for (x, y, w, h) in faces]
 
-    def process_face(self, face_roi: np.ndarray) -> Dict:
-        print("[DEBUG] Processing face ROI for emotion prediction...")
-        face_resized = cv2.resize(face_roi, (96, 96))
-        face_rgb = cv2.cvtColor(face_resized, cv2.COLOR_BGR2RGB)
-        inputs = self.processor(images=[face_rgb], return_tensors="pt")
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-            probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
-        filtered_probs = probs[0][self.target_indices]
-        filtered_probs = filtered_probs / filtered_probs.sum()
-        happy = filtered_probs[0].item()
-        normal = filtered_probs[1].item()
-        sad = filtered_probs[2].item()
-        print(f"[DEBUG] Emotion probabilities - Happy: {happy:.4f}, Normal: {normal:.4f}, Sad: {sad:.4f}")
-        return {'Happy': happy, 'Normal': normal, 'Sad': sad}
+    def process_face(self, face_roi: np.ndarray) -> Dict[str, float]:
+        # 1. Preprocess face as in internet_fer.py
+        gray = cv2.cvtColor(face_roi, cv2.COLOR_BGR2GRAY)
+        resized = cv2.resize(gray, self.FACE_SIZE)
+        normalized = resized.astype("float32") / 255.0
+        reshaped = np.reshape(normalized, (1, 64, 64, 1))
+        # 2. Predict
+        preds = self.model.predict(reshaped, verbose=0)[0]  # FER2013: [Angry, Disgust, Fear, Happy, Sad, Surprise, Neutral]
+        # 3. Map to Happy, Normal, Sad as in internet_fer.py
+        happy = preds[3]
+        normal = preds[6]
+        sad = preds[2] + preds[4]  # Angry + Fear + Sad
+        total = happy + normal + sad
+        # Normalize to sum to 1
+        if total > 0:
+            happy /= total
+            normal /= total
+            sad /= total
+        return {
+            'Happy': float(happy),
+            'Normal': float(normal),
+            'Sad': float(sad),
+        }
 
-    def classify_mood(self, happy, normal, sad):
-        print(f"[DEBUG] Classifying mood from values: Happy={happy}, Normal={normal}, Sad={sad}")
+    def classify_mood(self, happy, normal, sad) -> str:
         diff = happy - sad
-        if diff >= 0.4:
-            return "MUY FELIZ"
-        elif diff >= 0.15:
-            return "FELIZ"
-        elif diff > -0.15:
-            return "NORMAL"
-        elif diff > -0.4:
-            return "TRISTE"
-        else:
-            return "MUY TRISTE"
+        if diff >= 0.4:   return "MUY FELIZ"
+        if diff >= 0.15:  return "FELIZ"
+        if diff > -0.15:  return "NORMAL"
+        if diff > -0.35:   return "TRISTE"
+        return "MUY TRISTE"
 
     def analyze_camera_feed(self):
-        print("[DEBUG] Opening camera...")
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
-            raise RuntimeError("Could not open the camera (try sudo or check camera connection)")
-
+            raise RuntimeError("Cannot open camera")
         try:
             while True:
-                print("[DEBUG] Flushing camera buffer...")
-                # Grab and discard the last 10 frames to get the freshest image
-                for _ in range(10):
-                    cap.read()
-                print("[DEBUG] Capturing frame...")
+                # capture & resize for speed
                 ret, frame = cap.read()
                 if not ret:
-                    print("[DEBUG] Failed to capture frame. Exiting...")
                     break
-
                 frame = cv2.resize(frame, (320, 240))
+
+                # detect faces
                 faces = self.detect_faces(frame)
                 timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+
                 if faces:
-                    biggest = max(faces, key=lambda f: f['w'] * f['h'])
-                    x, y, w, h = biggest['x'], biggest['y'], biggest['w'], biggest['h']
-                    print(f"[DEBUG] Biggest face at (x: {x}, y: {y}, w: {w}, h: {h})")
+                    # pick largest
+                    f = max(faces, key=lambda r: r['w'] * r['h'])
+                    x, y, w, h = f['x'], f['y'], f['w'], f['h']
                     face_roi = frame[y:y+h, x:x+w]
-                    emotions = self.process_face(face_roi)
-                    mood = self.classify_mood(emotions['Happy'], emotions['Normal'], emotions['Sad'])
-                    print(f"Timestamp: {timestamp}")
-                    print(f"Face at (x: {x}, y: {y}, w: {w}, h: {h})")
-                    print(f"  Mood: {mood}")
-                    print(f"  Happy: {emotions['Happy']*100:.2f}%")
-                    print(f"  Normal: {emotions['Normal']*100:.2f}%")
-                    print(f"  Sad: {emotions['Sad']*100:.2f}%")
-                    # --- Send or store the timestamp with the detected emotion here ---
-                    # Example: save to a list or send to a server
-                    # detected_data.append({'timestamp': timestamp, 'mood': mood, 'emotions': emotions})
+
+                    # predict
+                    emo = self.process_face(face_roi)
+                    mood = self.classify_mood(emo['Happy'], emo['Normal'], emo['Sad'])
+
+                    # log only to console
+                    print(f"{timestamp} | {mood} | H:{emo['Happy']:.2f} N:{emo['Normal']:.2f} S:{emo['Sad']:.2f}")
+
                 else:
-                    print(f"[DEBUG] No faces detected in this frame. Timestamp: {timestamp}")
+                    print(f"{timestamp} | No face detected")
+
+                # Remove display code for headless/console use
+                time.sleep(1)  # Optional: slow down loop if needed
         finally:
-            print("[DEBUG] Releasing camera...")
             cap.release()
 
-# Example usage
+
+
+
 if __name__ == "__main__":
     detector = CameraFacialEmotionDetector()
-    try:
-        print("Starting emotion detection from the camera...")
-        print("Press Ctrl+C to stop.")
-        detector.analyze_camera_feed()
-    except Exception as e:
-        print(f"Error: {e}")
+    print("Press 'q' to exit.")
+    detector.analyze_camera_feed()
