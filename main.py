@@ -184,7 +184,7 @@ class StatisticsChart(QWidget):
             for i in range(self.window_size)
         ]
         for i, x in enumerate(x_positions):
-            if abs(event.x() - x) < 30:  # 30px tolerance
+            if abs(event.x() - x) < 10:  # 30px tolerance
                 global_idx = self.window_start + i
                 if global_idx < len(self.data):
                     self.day_clicked.emit(global_idx)
