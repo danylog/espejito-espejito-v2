@@ -44,12 +44,10 @@ if ON_RPI:
     GPIO_INPUT_PIN = 21
     GPIO.setup(GPIO_INPUT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    PWM_PINS = [17, 27, 22]  # Example GPIO pins
-    for pin in PWM_PINS:
-        GPIO.setup(pin, GPIO.OUT)
-    pwms = [GPIO.PWM(pin, 100) for pin in PWM_PINS]  # 100 Hz frequency
-    for pwm in pwms:
-        pwm.start(0)  # Start with 0% duty cycle
+    
+    GPIO.setup(15, GPIO.OUT)
+    pwm = GPIO.PWM(15, 490)
+    pwm.start(0)  # Start with 0% duty cycle
 else:
     GPIO_INPUT_PIN = None
     PWM_PINS = []
@@ -392,16 +390,15 @@ class MainScreen(QMainWindow):
         # Add widgets
         self.create_initial_widget(next_widget_index=1)                         #0
         self.create_widget1(next_widget_index=2)                     #1 
-        self.create_widget2(next_widget_index1=3, next_widget_index2=9, next_widget_index3=10) #2
+        self.create_widget2(next_widget_index1=3, next_widget_index2=8, next_widget_index3=9) #2
         self.create_show_face_widget(next_widget_index=4)            #3
         self.create_scan_face_countdown_widget(next_widget_index=5)     #4
         self.create_deteced_emotion_widget(next_widget_index1=6, next_widget_index2=4)      #5
         self.create_describe_emotion_widget(next_widget_index=7) #6
-        self.create_cause_emotion_widget(next_widget_index=8) #7
-        #self.create_send_to_contacts_widget(next_widget_index_no=0, next_widget_index_si=11) #8
-        self.create_statistics_widget(next_widget_index=2) #9
-        #self.create_contacts_widget(next_widget_index=2) # 10
-       # self.create_share_contacts_widget(next_widget_index=0) # 11
+        self.create_cause_emotion_widget(next_widget_index=10) #7
+        self.create_statistics_widget(next_widget_index=2) #8
+        self.create_contacts_widget(next_widget_index=2) # 9
+        self.create_send_to_contacts_widget(next_widget_index_si=2, next_widget_index_no=2) # 10
 
        # self.create_day_details_widget(next_widget_index=9) #10
         
@@ -423,6 +420,8 @@ class MainScreen(QMainWindow):
         if ON_RPI:
             if GPIO.input(GPIO_INPUT_PIN) == GPIO.LOW:
                 print("[DEBUG] GPIO input detected, toggling black overlay.")
+                pwm.ChangeDutyCycle(0);
+
                 self.black_overlay.show()
                 self.black_overlay.raise_()  # <-- Ensure overlay is on top
 
@@ -482,7 +481,7 @@ class MainScreen(QMainWindow):
 
         # Add an image to the initial widget
         label = QLabel()
-        label.setPixmap(QPixmap("cupra.png").scaled(320, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        label.setPixmap(QPixmap("cupra.png").scaled(370, 170, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         label.setAlignment(Qt.AlignCenter)
         layout.addWidget(label)
 
@@ -507,7 +506,7 @@ class MainScreen(QMainWindow):
 
         label = QLabel("LO QUE SIENTES\nIMPORTA", alignment=Qt.AlignCenter)
 
-        label.setStyleSheet(f"color: white; font-size: 28px; font-family: '{jostLight}';")
+        label.setStyleSheet(f"color: white; font-size: 50px; font-family: '{jostLight}';")
         layout.addWidget(label)
 
         fade_widget = FadeWidget(widget)
@@ -527,7 +526,7 @@ class MainScreen(QMainWindow):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(30, 30, 30, 30)
         layout.setSpacing(8)
         label1 = QLabel("ENTENDER TU ESTADO DE ÁNIMO\nES CLAVE PARA PODER REFLEXIONAR SOBRE\nLO QUE PODRÍA INFLUIR EN TU\nBIENESTAR EMOCIONAL.", alignment=Qt.AlignLeft)
         font_path1 = os.path.join(os.path.dirname(__file__), "Jost-ExtraLight.ttf")
@@ -538,11 +537,11 @@ class MainScreen(QMainWindow):
             jostExtraLight = QFontDatabase.applicationFontFamilies(font_id1)[0]
             print("Loaded font family:", jostExtraLight)
 
-        label1.setStyleSheet(f"color: white; font-size: 18px; font-family: 'Jost'; font-weight: 200;")
+        label1.setStyleSheet(f"color: white; font-size: 35px; font-family: 'Jost'; font-weight: 200;")
         layout.addWidget(label1)
 
         button = QPushButton("ESCANEAR ESTADO EMOCIONAL")
-        button.setStyleSheet("background-color: #000; color: white; font-size: 18px; font-family: 'Jost'; font-weight: 150; border-bottom: 10px solid white;")
+        button.setStyleSheet("background-color: #000; color: white; font-size: 20px; font-family: 'Jost'; font-weight: 150; border-bottom: 10px solid white;")
         button.setFixedHeight(36)
         layout.addWidget(button, alignment=Qt.AlignLeft)
                 
@@ -550,11 +549,11 @@ class MainScreen(QMainWindow):
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Plain)
         line.setStyleSheet("background-color: orange;")
-        line.setFixedSize(300, 3)
+        line.setFixedSize(283, 3)
         layout.addWidget(line)
 
         button2 = QPushButton("VER ESTADÍSTICAS DEL ESTADO EMOCIONAL")
-        button2.setStyleSheet("background-color: #000; color: white; font-size: 18px; font-family: 'Jost'; font-weight: 150;")
+        button2.setStyleSheet("background-color: #000; color: white; font-size: 20px; font-family: 'Jost'; font-weight: 150;")
         button2.setFixedHeight(36)
         layout.addWidget(button2, alignment=Qt.AlignLeft)
 
@@ -562,12 +561,12 @@ class MainScreen(QMainWindow):
         line2.setFrameShape(QFrame.HLine)
         line2.setFrameShadow(QFrame.Plain)
         line2.setStyleSheet("background-color: orange;")
-        line2.setFixedSize(120, 3)
+        line2.setFixedSize(383, 3)
         layout.addWidget(line2)
 
         # --- NEW: Add "VER CONTACTOS" button ---
         button3 = QPushButton("VER CONTACTOS")
-        button3.setStyleSheet("background-color: #000; color: white; font-size: 18px; font-family: 'Jost'; font-weight: 150;")
+        button3.setStyleSheet("background-color: #000; color: white; font-size: 20px; font-family: 'Jost'; font-weight: 150;")
         button3.setFixedHeight(36)
         layout.addWidget(button3, alignment=Qt.AlignLeft)
 
@@ -575,7 +574,7 @@ class MainScreen(QMainWindow):
         line3.setFrameShape(QFrame.HLine)
         line3.setFrameShadow(QFrame.Plain)
         line3.setStyleSheet("background-color: orange;")
-        line3.setFixedSize(120, 3)
+        line3.setFixedSize(145, 3)
         layout.addWidget(line3)
 
         fade_widget = FadeWidget(widget)
@@ -594,57 +593,39 @@ class MainScreen(QMainWindow):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        title = QLabel("TUS CONTACTOS")
-        title.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200;")
-        title.setAlignment(Qt.AlignLeft)
-        title.setFixedHeight(28)
-        layout.addWidget(title)
-        layout.addSpacing(8)
+        # Fullscreen image (replace 'contacts.png' with your image file)
+        image_label = QLabel()
+        image_label.setPixmap(QPixmap("contacts.png").scaled(800, 480, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+        image_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(image_label)
 
-        # Example contacts list
-        contacts = ["Mamá", "Papá", "Amigo 1", "Amiga 2", "Psicóloga"]
-        for contact in contacts:
-            contact_label = QLabel(contact)
-            contact_label.setStyleSheet("color: #ccc; font-size: 18px; font-family: 'Jost'; font-weight: 200;")
-            contact_label.setFixedHeight(24)
-            layout.addWidget(contact_label)
-            layout.addSpacing(2)
-
-        layout.addStretch()
-
-        # Back button
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        volver_btn = QPushButton("VOLVER")
-        volver_btn.setStyleSheet("""
-            background-color: #000;
-            color: white;
-            font-size: 18px;
-            font-family: 'Jost';
-            font-weight: 100;
-            border: none;
+        # Cross button (top-right, overlay style)
+        cross_btn = QPushButton("✕", widget)
+        cross_btn.setStyleSheet("""
+            QPushButton {
+                color: white;
+                background: rgba(0,0,0,0.5);
+                border: none;
+                font-size: 36px;
+                font-family: 'Jost';
+                font-weight: 200;
+                padding: 0 12px;
+            }
+            QPushButton:hover {
+                color: orange;
+            }
         """)
-        volver_btn.setFixedHeight(28)
-        button_container = QVBoxLayout()
-        button_container.setSpacing(0)
-        button_container.setContentsMargins(0, 0, 0, 0)
-        button_container.addWidget(volver_btn)
-        underline = QFrame()
-        underline.setFrameShape(QFrame.HLine)
-        underline.setFrameShadow(QFrame.Plain)
-        underline.setStyleSheet("background-color: orange;")
-        underline.setFixedHeight(2)
-        button_container.addWidget(underline)
-        button_layout.addLayout(button_container)
-        layout.addLayout(button_layout)
+        cross_btn.setFixedSize(48, 48)
+        cross_btn.move(740, 10)  # Position at top-right (800-48-12, 10)
+        cross_btn.raise_()
+        cross_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
 
         fade_widget = FadeWidget(widget)
         self.stack.addWidget(fade_widget)
         self.fade_widgets.append(fade_widget)
-
-        volver_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
         return fade_widget
 
     def create_share_contacts_widget(self, next_widget_index):
@@ -723,66 +704,7 @@ class MainScreen(QMainWindow):
     # --- In __init__ or where you add widgets, update the indices ---
     # Example:
     # --- At the end of create_send_to_contacts_widget, after user says "SI", go to share contacts page ---
-    def create_send_to_contacts_widget(self, next_widget_index_si, next_widget_index_no):
-        widget = QWidget()
-        widget.setStyleSheet("background-color: #000000;")
-        layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
-
-        # Title
-        title = QLabel("¿TE GUSTARÍA\nCOMPARTIRLO CON\nTUS CONTACTOS?")
-        title.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200;")
-        title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        layout.addWidget(title)
-        layout.addStretch()
-
-        # SI / NO buttons with underline
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(8)
-        button_layout.setContentsMargins(10, 0, 0, 10)
-
-        # SI button with underline
-        si_container = QVBoxLayout()
-        si_container.setSpacing(0)
-        si_container.setContentsMargins(0, 0, 0, 0)
-        si_btn = QPushButton("SI")
-        si_btn.setCursor(Qt.PointingHandCursor)
-        si_btn.setStyleSheet("color: white; font-size: 18px; font-family: 'Jost'; border: none; background: transparent;")
-        si_btn.clicked.connect(lambda: self.fade_to(self.current, 11))  # Go to share contacts page
-        si_container.addWidget(si_btn)
-        si_underline = QFrame()
-        si_underline.setFrameShape(QFrame.HLine)
-        si_underline.setFrameShadow(QFrame.Plain)
-        si_underline.setStyleSheet("background-color: orange;")
-        si_underline.setFixedHeight(2)
-        si_container.addWidget(si_underline)
-
-        # NO button with underline
-        no_container = QVBoxLayout()
-        no_container.setSpacing(0)
-        no_container.setContentsMargins(0, 0, 0, 0)
-        no_btn = QPushButton("NO")
-        no_btn.setCursor(Qt.PointingHandCursor)
-        no_btn.setStyleSheet("color: white; font-size: 18px; font-family: 'Jost'; border: none; background: transparent;")
-        no_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index_no))
-        no_container.addWidget(no_btn)
-        no_underline = QFrame()
-        no_underline.setFrameShape(QFrame.HLine)
-        no_underline.setFrameShadow(QFrame.Plain)
-        no_underline.setStyleSheet("background-color: orange;")
-        no_underline.setFixedHeight(2)
-        no_container.addWidget(no_underline)
-
-        button_layout.addLayout(si_container)
-        button_layout.addSpacing(10)
-        button_layout.addLayout(no_container)
-        button_layout.addStretch()
-        layout.addLayout(button_layout)
-
-        fade_widget = FadeWidget(widget)
-        self.stack.addWidget(fade_widget)
-        self.fade_widgets.append(fade_widget)
-        
+    
     def create_show_face_widget(self, next_widget_index):
         """
         Creates the widget that shows the face with a button to go back.
@@ -792,7 +714,7 @@ class MainScreen(QMainWindow):
         layout = QVBoxLayout(widget)
 
         label = QLabel("MUESTRA CON TU\nROSTRO CÓMO TE\nSIENTES", alignment=Qt.AlignCenter)
-        label.setStyleSheet("color: white; font-size: 28px; font-family: 'Jost'; font-weight: 200;")
+        label.setStyleSheet("color: white; font-size: 50px; font-family: 'Jost'; font-weight: 200;")
         layout.addWidget(label, alignment=Qt.AlignCenter)
 
 
@@ -864,11 +786,11 @@ class MainScreen(QMainWindow):
         layout = QVBoxLayout(widget)
 
         label = QLabel("ESCANEANDO\nEMOCIONES", alignment=Qt.AlignCenter)
-        label.setStyleSheet("color: white; font-size: 28px; font-family: 'Jost'; font-weight: 200;")
+        label.setStyleSheet("color: white; font-size: 35px; font-family: 'Jost'; font-weight: 200;")
         layout.addWidget(label, alignment=Qt.AlignCenter)
 
         self.countdown_label = QLabel("3", alignment=Qt.AlignCenter)
-        self.countdown_label.setStyleSheet("color: white; font-size: 100px; font-family: 'Jost'; font-weight: 150;")
+        self.countdown_label.setStyleSheet("color: white; font-size: 85px; font-family: 'Jost'; font-weight: 150;")
         layout.addWidget(self.countdown_label, alignment=Qt.AlignCenter)
 
         fade_widget = FadeWidget(widget)
@@ -929,13 +851,13 @@ class MainScreen(QMainWindow):
 
         # Title label
         title_label = QLabel("ESTADO DE ÁNIMO\nDETECTADO:")
-        title_label.setStyleSheet("color: white; font-size: 32px; font-family: 'Jost'; font-weight: 200; background: transparent;")
+        title_label.setStyleSheet("color: white; font-size: 40px; font-family: 'Jost'; font-weight: 200; background: transparent;")
         title_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         text_layout.addWidget(title_label)
 
         # Emotion label
         self.emotion_label = QLabel()
-        self.emotion_label.setStyleSheet("color: white; font-size: 48px; font-family: 'Jost'; font-weight: 200; background: transparent;")
+        self.emotion_label.setStyleSheet("color: white; font-size: 55px; font-family: 'Jost'; font-weight: 200; background: transparent;")
         self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         text_layout.addWidget(self.emotion_label)
         text_layout.addStretch()
@@ -986,7 +908,26 @@ class MainScreen(QMainWindow):
         voronoi.update = update_voronoi
 
         fade_widget = FadeWidget(widget)
-        fade_widget.visibilityChanged = lambda: (self.emotion_label.setText(self.latest_mood if self.latest_mood else "NO DETECTADO"), voronoi.start_animation())
+
+        def on_visibility():
+            # Set emotion label and start animation
+            mood = self.latest_mood if self.latest_mood else "NO DETECTADO"
+            self.emotion_label.setText(mood)
+            voronoi.start_animation()
+            # --- PWM control depending on emotion ---
+            if ON_RPI:
+                # Map moods to duty cycles (adjust as needed)
+                pwm_values = {
+                    "MUY FELIZ": 100,
+                    "FELIZ": 80,
+                    "NORMAL": 60,
+                    "TRISTE": 40,
+                    "MUY TRISTE": 20,
+                }
+                pwm.ChangeDutyCycle(pwm_values.get(mood, 0))
+
+        fade_widget.visibilityChanged = on_visibility
+
         self.stack.addWidget(fade_widget)
         self.fade_widgets.append(fade_widget)
 
@@ -1001,11 +942,11 @@ class MainScreen(QMainWindow):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(30, 30, 30, 30)
 
         # Title
-        title = QLabel("¿CÓMO DESCRIBIRÍAS\nLO QUE SIENTES?")
-        title.setStyleSheet("color: white; font-size: 14px; margin-left: 10px;  font-family: 'Jost'; font-weight: 200;")
+        title = QLabel("¿CÓMO DESCRIBIRÍAS LO QUE SIENTES?")
+        title.setStyleSheet("color: white; font-size: 40px; font-family: 'Jost'; font-weight: 200;")
         title.setAlignment(Qt.AlignLeft)
         layout.addWidget(title)
         layout.addSpacing(10)
@@ -1022,7 +963,7 @@ class MainScreen(QMainWindow):
         ]
         grid = QGridLayout()
         grid.setHorizontalSpacing(10)
-        grid.setVerticalSpacing(4)
+        grid.setVerticalSpacing(10)
         grid.setContentsMargins(10, 5, 10, 5)
 
         self.selected_emotion = set()
@@ -1032,17 +973,17 @@ class MainScreen(QMainWindow):
             # Deselect all
             if word in self.selected_emotion:
                 self.selected_emotion.remove(word)
-                btn.setStyleSheet("color: white; font-size: 10px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+                btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
             else:
                 self.selected_emotion.add(word)
-                btn.setStyleSheet("color: orange; font-size: 10px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none; text-decoration: underline;")
+                btn.setStyleSheet("color: orange; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none; text-decoration: underline;")
 
         for row, row_words in enumerate(emotions):
             for col, word in enumerate(row_words):
                 if word:
                     btn = QPushButton(word)
                     btn.setCursor(Qt.PointingHandCursor)
-                    btn.setStyleSheet("color: white; font-size: 10px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+                    btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
                     btn.clicked.connect(lambda checked, w=word, b=btn: on_emotion_clicked(w, b))
                     grid.addWidget(btn, row, col)
                     self.emotion_buttons.append(btn)
@@ -1057,7 +998,7 @@ class MainScreen(QMainWindow):
         siguiente_btn.setStyleSheet("""
             background-color: #000;
             color: white;
-            font-size: 10px;
+            font-size: 19px;
             font-family: 'Jost';
             font-weight: 100;
             border: none;
@@ -1086,16 +1027,21 @@ class MainScreen(QMainWindow):
         siguiente_btn.clicked.connect(on_next)
 
         siguiente_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
+        def reset_emotion_selection():
+            self.selected_emotion.clear()
+            for btn in self.emotion_buttons:
+                btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+        fade_widget.visibilityChanged = reset_emotion_selection
     
     def create_cause_emotion_widget(self, next_widget_index):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(30, 30, 30, 30)
 
         # Title
-        title = QLabel("¿CUÁLES SON LOS\nMOTIVOS?")
-        title.setStyleSheet("color: white; font-size: 16px; margin-left: 10px; font-family: 'Jost'; font-weight: 200;")
+        title = QLabel("¿CUÁLES SON LOS MOTIVOS?")
+        title.setStyleSheet("color: white; font-size: 40px; font-family: 'Jost'; font-weight: 200;")
         title.setAlignment(Qt.AlignLeft)
         layout.addWidget(title)
         layout.addSpacing(20)
@@ -1109,7 +1055,7 @@ class MainScreen(QMainWindow):
         ]
         grid = QGridLayout()
         grid.setHorizontalSpacing(10)
-        grid.setVerticalSpacing(4)
+        grid.setVerticalSpacing(10)
         grid.setContentsMargins(10, 5, 10, 5)
 
         self.selected_motives = set()
@@ -1118,17 +1064,17 @@ class MainScreen(QMainWindow):
         def on_motive_clicked(word, btn):
             if word in self.selected_motives:
                 self.selected_motives.remove(word)
-                btn.setStyleSheet("color: white; font-size: 10px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+                btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
             else:
                 self.selected_motives.add(word)
-                btn.setStyleSheet("color: orange; font-size: 10px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none; text-decoration: underline;")
+                btn.setStyleSheet("color: orange; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none; text-decoration: underline;")
 
         for row, row_words in enumerate(motives):
             for col, word in enumerate(row_words):
                 if word:
                     btn = QPushButton(word)
                     btn.setCursor(Qt.PointingHandCursor)
-                    btn.setStyleSheet("color: white; font-size: 10px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+                    btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
                     btn.setCheckable(True)
                     btn.clicked.connect(lambda checked, w=word, b=btn: on_motive_clicked(w, b))
                     grid.addWidget(btn, row, col)
@@ -1144,7 +1090,7 @@ class MainScreen(QMainWindow):
         guardar_btn.setStyleSheet("""
             background-color: #000;
             color: white;
-            font-size: 12px;
+            font-size: 19px;
             font-family: 'Jost';
             font-weight: 100;
             border: none;
@@ -1171,15 +1117,21 @@ class MainScreen(QMainWindow):
             self.fade_to(self.current, next_widget_index)
 
         guardar_btn.clicked.connect(on_save)
+        def reset_motive_selection():
+            self.selected_motives.clear()
+            for btn in self.motive_buttons:  
+                btn.setChecked(False)
+                btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+        fade_widget.visibilityChanged = reset_motive_selection
     def create_send_to_contacts_widget(self, next_widget_index_si, next_widget_index_no):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(30, 30, 30, 30)
 
         # Title
         title = QLabel("¿TE GUSTARÍA\nCOMPARTIRLO CON\nTUS CONTACTOS?")
-        title.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200;")
+        title.setStyleSheet("color: white; font-size: 50px; font-family: 'Jost'; font-weight: 200;")
         title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         layout.addWidget(title)
         layout.addStretch()
@@ -1192,10 +1144,10 @@ class MainScreen(QMainWindow):
         # SI button with underline
         si_container = QVBoxLayout()
         si_container.setSpacing(0)
-        si_container.setContentsMargins(0, 0, 0, 0)
+        si_container.setContentsMargins(10, 0, 10, 0)
         si_btn = QPushButton("SI")
         si_btn.setCursor(Qt.PointingHandCursor)
-        si_btn.setStyleSheet("color: white; font-size: 18px; font-family: 'Jost'; border: none; background: transparent;")
+        si_btn.setStyleSheet("color: white; font-size: 25px; font-family: 'Jost'; border: none; background: transparent;")
         si_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index_si))
         si_container.addWidget(si_btn)
         si_underline = QFrame()
@@ -1208,10 +1160,10 @@ class MainScreen(QMainWindow):
         # NO button with underline
         no_container = QVBoxLayout()
         no_container.setSpacing(0)
-        no_container.setContentsMargins(0, 0, 0, 0)
+        no_container.setContentsMargins(10, 0, 10, 0)
         no_btn = QPushButton("NO")
         no_btn.setCursor(Qt.PointingHandCursor)
-        no_btn.setStyleSheet("color: white; font-size: 18px; font-family: 'Jost'; border: none; background: transparent;")
+        no_btn.setStyleSheet("color: white; font-size: 25px; font-family: 'Jost'; border: none; background: transparent;")
         no_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index_no))
         no_container.addWidget(no_btn)
         no_underline = QFrame()
@@ -1239,7 +1191,7 @@ class MainScreen(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
 
         title = QLabel()
-        title.setStyleSheet("color: white; font-size: 28px; font-family: 'Jost';")
+        title.setStyleSheet("color: white; margin-left: 20px; font-size: 28px; font-family: 'Jost';")
         title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         layout.addWidget(title)
         layout.addSpacing(10)
