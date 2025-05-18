@@ -346,16 +346,16 @@ class MainScreen(QMainWindow):
         self._scan_running = False
         self.setWindowTitle("Decentralized Widget Demo")
 
-        # if ON_RPI:
-        #     self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        #     self.showFullScreen()
-        #     self.setCursor(Qt.BlankCursor)
-        #     QApplication.setOverrideCursor(Qt.BlankCursor)
-        # else:
-        self.resize(800, 480)  # Or any size you prefer for Mac
-        self.setWindowFlags(Qt.Window)
-        self.setCursor(Qt.ArrowCursor)
-        QApplication.setOverrideCursor(Qt.ArrowCursor)
+        if ON_RPI:
+            self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+            self.showFullScreen()
+            self.setCursor(Qt.BlankCursor)
+            QApplication.setOverrideCursor(Qt.BlankCursor)
+        else:
+            self.resize(800, 480)  # Or any size you prefer for Mac
+            self.setWindowFlags(Qt.Window)
+            self.setCursor(Qt.ArrowCursor)
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
 
         self.black_overlay = QWidget(self)
         self.black_overlay.setStyleSheet("background-color: black;")
@@ -838,8 +838,8 @@ class MainScreen(QMainWindow):
         voronoi_label = QLabel()
         voronoi_label.setFixedSize(800, 480)
         layout.addWidget(voronoi_label)
-
-        voronoi = VoronoiWidget(parent=None, num_points=800, edges_per_tick=200)
+        # Default values, will be updated on visibility
+        self.voronoi = VoronoiWidget(voronoi_label, num_points=1000, edges_per_tick=100)
 
         # Overlay text container (fills the Voronoi area)
         text_container = QWidget(voronoi_label)
@@ -902,9 +902,9 @@ class MainScreen(QMainWindow):
         def update_voronoi():
             pixmap = QPixmap(voronoi_label.size())
             pixmap.fill(Qt.black)
-            voronoi.render(pixmap)
+            self.voronoi.render(pixmap)
             voronoi_label.setPixmap(pixmap)
-        voronoi.update = update_voronoi
+        self.voronoi.update = update_voronoi
 
         fade_widget = FadeWidget(widget)
 
@@ -912,7 +912,39 @@ class MainScreen(QMainWindow):
             # Set emotion label and start animation
             mood = self.latest_mood if self.latest_mood else "NO DETECTADO"
             self.emotion_label.setText(mood)
-            voronoi.start_animation()
+
+            # --- Voronoi animation parameters based on mood ---
+            # You can tune these values as you wish
+            voronoi_params = {
+                "MUY FELIZ":   {"num_points": 2500, "edges_per_tick": 500},
+                "FELIZ":       {"num_points": 2000, "edges_per_tick": 400},
+                "NORMAL":      {"num_points": 1500,  "edges_per_tick": 300},
+                "TRISTE":      {"num_points": 1000,  "edges_per_tick": 200},
+                "MUY TRISTE":  {"num_points": 500,  "edges_per_tick": 100},
+            }
+            params = voronoi_params.get(mood, {"num_points": 700, "edges_per_tick": 60})
+
+            # Re-create the VoronoiWidget with new parameters
+            # Remove old widget from layout
+            layout.removeWidget(voronoi_label)
+            voronoi_label.deleteLater()
+            new_voronoi_label = QLabel()
+            new_voronoi_label.setFixedSize(800, 480)
+            layout.insertWidget(0, new_voronoi_label)
+            self.voronoi = VoronoiWidget(new_voronoi_label, num_points=params["num_points"], edges_per_tick=params["edges_per_tick"])
+
+            # Re-attach overlay and update logic
+            text_container.setParent(new_voronoi_label)
+            text_container.setGeometry(0, 0, 800, 480)
+            def update_voronoi_new():
+                pixmap = QPixmap(new_voronoi_label.size())
+                pixmap.fill(Qt.black)
+                self.voronoi.render(pixmap)
+                new_voronoi_label.setPixmap(pixmap)
+            self.voronoi.update = update_voronoi_new
+
+            self.voronoi.start_animation()
+
             # --- PWM control depending on emotion ---
             if ON_RPI:
                 pwm_values = {
@@ -920,7 +952,7 @@ class MainScreen(QMainWindow):
                     "FELIZ": 180,
                     "NORMAL": 128,
                     "TRISTE": 64,
-                    "MUY TRISTE": 20,
+                    "MUY TRISTE": 30,
                 }
                 pi.set_PWM_dutycycle(PWM_PIN, pwm_values.get(mood, 0))
 
