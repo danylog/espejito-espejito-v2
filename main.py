@@ -545,17 +545,14 @@ class MainScreen(QMainWindow):
             QPushButton {
                 background-color: #000;
                 color: white;
-                font-size: 25px;
+                font-size: 30px;
                 font-family: 'Jost';
                 font-weight: 170;
                 border: none;
                 border-bottom: 3px solid orange;
-                padding-bottom: 2px;
+                padding-bottom: 5px;
             }
-            QPushButton:hover {
-                color: orange;
-                text-decoration: underline;
-            }
+
         """)
         button.setFixedHeight(36)
         layout.addWidget(button, alignment=Qt.AlignLeft)
@@ -566,17 +563,14 @@ class MainScreen(QMainWindow):
             QPushButton {
                 background-color: #000;
                 color: white;
-                font-size: 25px;
+                font-size: 30px;
                 font-family: 'Jost';
                 font-weight: 170;
                 border: none;
                 border-bottom: 3px solid orange;
-                padding-bottom: 2px;
+                padding-bottom: 5px;
             }
-            QPushButton:hover {
-                color: orange;
-                text-decoration: underline;
-            }
+
         """)
         button2.setFixedHeight(36)
         layout.addWidget(button2, alignment=Qt.AlignLeft)
@@ -587,17 +581,14 @@ class MainScreen(QMainWindow):
             QPushButton {
                 background-color: #000;
                 color: white;
-                font-size: 25px;
+                font-size: 30px;
                 font-family: 'Jost';
                 font-weight: 170;
                 border: none;
                 border-bottom: 3px solid orange;
-                padding-bottom: 2px;
+                padding-bottom: 5px;
             }
-            QPushButton:hover {
-                color: orange;
-                text-decoration: underline;
-            }
+
         """)
         button3.setFixedHeight(36)
         layout.addWidget(button3, alignment=Qt.AlignLeft)
