@@ -550,7 +550,7 @@ class MainScreen(QMainWindow):
                 font-weight: 170;
                 border: none;
                 border-bottom: 3px solid orange;
-                padding-bottom: 5px;
+                padding-bottom: 10px;
             }
 
         """)
@@ -568,7 +568,7 @@ class MainScreen(QMainWindow):
                 font-weight: 170;
                 border: none;
                 border-bottom: 3px solid orange;
-                padding-bottom: 5px;
+                padding-bottom: 10px;
             }
 
         """)
@@ -586,7 +586,7 @@ class MainScreen(QMainWindow):
                 font-weight: 170;
                 border: none;
                 border-bottom: 3px solid orange;
-                padding-bottom: 5px;
+                padding-bottom: 10px;
             }
 
         """)
