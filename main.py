@@ -916,11 +916,11 @@ class MainScreen(QMainWindow):
             # --- Voronoi animation parameters based on mood ---
             # You can tune these values as you wish
             voronoi_params = {
-                "MUY FELIZ":   {"num_points": 2500, "edges_per_tick": 500},
-                "FELIZ":       {"num_points": 2000, "edges_per_tick": 400},
-                "NORMAL":      {"num_points": 1500,  "edges_per_tick": 300},
-                "TRISTE":      {"num_points": 1000,  "edges_per_tick": 200},
-                "MUY TRISTE":  {"num_points": 500,  "edges_per_tick": 100},
+                "MUY FELIZ":   {"num_points": 250, "edges_per_tick": 50},
+                "FELIZ":       {"num_points": 200, "edges_per_tick": 40},
+                "NORMAL":      {"num_points": 150,  "edges_per_tick": 30},
+                "TRISTE":      {"num_points": 100,  "edges_per_tick": 20},
+                "MUY TRISTE":  {"num_points": 50,  "edges_per_tick": 10},
             }
             params = voronoi_params.get(mood, {"num_points": 700, "edges_per_tick": 60})
 
