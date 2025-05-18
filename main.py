@@ -419,7 +419,7 @@ class MainScreen(QMainWindow):
         if ON_RPI:
             if pi.read(GPIO_INPUT_PIN) == 0:
                 print("[DEBUG] GPIO input detected, toggling black overlay.")
-                pwm.ChangeDutyCycle(0);
+                pi.set_PWM_dutycycle(PWM_PIN, 0)
 
                 self.black_overlay.show()
                 self.black_overlay.raise_()  # <-- Ensure overlay is on top
