@@ -550,12 +550,12 @@ class MainScreen(QMainWindow):
                 font-weight: 170;
                 border: none;
                 border-bottom: 3px solid orange;
-                padding-bottom: 7px;
+                padding-bottom: 5px;
             }
-
         """)
         button.setFixedHeight(36)
         layout.addWidget(button, alignment=Qt.AlignLeft)
+        layout.addSpacing(18)  # Add spacing between buttons
 
         # --- Option 2: VER ESTADÍSTICAS DEL ESTADO EMOCIONAL ---
         button2 = QPushButton("VER ESTADÍSTICAS DEL ESTADO EMOCIONAL")
@@ -568,13 +568,12 @@ class MainScreen(QMainWindow):
                 font-weight: 170;
                 border: none;
                 border-bottom: 3px solid orange;
-                padding-bottom: 7px;
-                margin-top: 10px;
+                padding-bottom: 5px;
             }
-
         """)
         button2.setFixedHeight(36)
         layout.addWidget(button2, alignment=Qt.AlignLeft)
+        layout.addSpacing(18)  # Add spacing between buttons
 
         # --- Option 3: VER CONTACTOS ---
         button3 = QPushButton("VER CONTACTOS")
@@ -587,10 +586,8 @@ class MainScreen(QMainWindow):
                 font-weight: 170;
                 border: none;
                 border-bottom: 3px solid orange;
-                padding-bottom: 7x;
-                margin-top: 10px;
+                padding-bottom: 5px;
             }
-
         """)
         button3.setFixedHeight(36)
         layout.addWidget(button3, alignment=Qt.AlignLeft)
