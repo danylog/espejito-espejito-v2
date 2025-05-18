@@ -30,28 +30,27 @@ import os
 
 ON_RPI = False
 try:
-    import RPi.GPIO as GPIO
-    ON_RPI = True
+    import pigpio
+    pi = pigpio.pi()
+    ON_RPI = pi.connected
 except (ImportError, RuntimeError):
-    GPIO = None
+    pi = None
+    ON_RPI = False
 
 from PyQt5.QtGui import QCursor
 
 
 
 if ON_RPI:
-    GPIO.setmode(GPIO.BCM)
     GPIO_INPUT_PIN = 21
-    GPIO.setup(GPIO_INPUT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-    
-    GPIO.setup(15, GPIO.OUT)
-    pwm = GPIO.PWM(15, 490)
-    pwm.start(0)  # Start with 0% duty cycle
+    PWM_PIN = 12  # Use GPIO12 for PWM
+    pi.set_PWM_frequency(PWM_PIN, 1000)  # 1kHz
+    pi.set_PWM_dutycycle(PWM_PIN, 0)     # Start with 0% duty cycle
+    pi.set_mode(GPIO_INPUT_PIN, pigpio.INPUT)
+    pi.set_pull_up_down(GPIO_INPUT_PIN, pigpio.PUD_UP)  # <-- This enables the pull-up
 else:
     GPIO_INPUT_PIN = None
-    PWM_PINS = []
-    pwms = []
+    PWM_PIN = None
 
 os.environ["QT_QPA_PLATFORMTHEME"] = "fusion"
 
@@ -347,16 +346,16 @@ class MainScreen(QMainWindow):
         self._scan_running = False
         self.setWindowTitle("Decentralized Widget Demo")
 
-        if ON_RPI:
-            self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-            self.showFullScreen()
-            self.setCursor(Qt.BlankCursor)
-            QApplication.setOverrideCursor(Qt.BlankCursor)
-        else:
-            self.resize(800, 480)  # Or any size you prefer for Mac
-            self.setWindowFlags(Qt.Window)
-            self.setCursor(Qt.ArrowCursor)
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+        # if ON_RPI:
+        #     self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        #     self.showFullScreen()
+        #     self.setCursor(Qt.BlankCursor)
+        #     QApplication.setOverrideCursor(Qt.BlankCursor)
+        # else:
+        self.resize(800, 480)  # Or any size you prefer for Mac
+        self.setWindowFlags(Qt.Window)
+        self.setCursor(Qt.ArrowCursor)
+        QApplication.setOverrideCursor(Qt.ArrowCursor)
 
         self.black_overlay = QWidget(self)
         self.black_overlay.setStyleSheet("background-color: black;")
@@ -916,15 +915,14 @@ class MainScreen(QMainWindow):
             voronoi.start_animation()
             # --- PWM control depending on emotion ---
             if ON_RPI:
-                # Map moods to duty cycles (adjust as needed)
                 pwm_values = {
-                    "MUY FELIZ": 100,
-                    "FELIZ": 80,
-                    "NORMAL": 60,
-                    "TRISTE": 40,
+                    "MUY FELIZ": 255,
+                    "FELIZ": 180,
+                    "NORMAL": 128,
+                    "TRISTE": 64,
                     "MUY TRISTE": 20,
                 }
-                pwm.ChangeDutyCycle(pwm_values.get(mood, 0))
+                pi.set_PWM_dutycycle(PWM_PIN, pwm_values.get(mood, 0))
 
         fade_widget.visibilityChanged = on_visibility
 
