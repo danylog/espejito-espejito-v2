@@ -548,7 +548,7 @@ class MainScreen(QMainWindow):
         line.setFrameShape(QFrame.HLine)
         line.setFrameShadow(QFrame.Plain)
         line.setStyleSheet("background-color: orange;")
-        line.setFixedSize(283, 3)
+        line.setFixedSize(310, 3)
         layout.addWidget(line)
 
         button2 = QPushButton("VER ESTADÍSTICAS DEL ESTADO EMOCIONAL")
@@ -560,7 +560,7 @@ class MainScreen(QMainWindow):
         line2.setFrameShape(QFrame.HLine)
         line2.setFrameShadow(QFrame.Plain)
         line2.setStyleSheet("background-color: orange;")
-        line2.setFixedSize(383, 3)
+        line2.setFixedSize(410, 3)
         layout.addWidget(line2)
 
         # --- NEW: Add "VER CONTACTOS" button ---
@@ -573,7 +573,7 @@ class MainScreen(QMainWindow):
         line3.setFrameShape(QFrame.HLine)
         line3.setFrameShadow(QFrame.Plain)
         line3.setStyleSheet("background-color: orange;")
-        line3.setFixedSize(145, 3)
+        line3.setFixedSize(165, 3)
         layout.addWidget(line3)
 
         fade_widget = FadeWidget(widget)
