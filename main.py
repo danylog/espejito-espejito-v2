@@ -540,7 +540,7 @@ class MainScreen(QMainWindow):
         layout.addWidget(label1)
 
         button = QPushButton("ESCANEAR ESTADO EMOCIONAL")
-        button.setStyleSheet("background-color: #000; color: white; font-size: 20px; font-family: 'Jost'; font-weight: 150; border-bottom: 10px solid white;")
+        button.setStyleSheet("background-color: #000; color: white; font-size: 25px; font-family: 'Jost'; font-weight: 170; border-bottom: 10px solid white;")
         button.setFixedHeight(36)
         layout.addWidget(button, alignment=Qt.AlignLeft)
                 
@@ -552,7 +552,7 @@ class MainScreen(QMainWindow):
         layout.addWidget(line)
 
         button2 = QPushButton("VER ESTADÍSTICAS DEL ESTADO EMOCIONAL")
-        button2.setStyleSheet("background-color: #000; color: white; font-size: 20px; font-family: 'Jost'; font-weight: 150;")
+        button2.setStyleSheet("background-color: #000; color: white; font-size: 25px; font-family: 'Jost'; font-weight: 170;")
         button2.setFixedHeight(36)
         layout.addWidget(button2, alignment=Qt.AlignLeft)
 
@@ -565,7 +565,7 @@ class MainScreen(QMainWindow):
 
         # --- NEW: Add "VER CONTACTOS" button ---
         button3 = QPushButton("VER CONTACTOS")
-        button3.setStyleSheet("background-color: #000; color: white; font-size: 20px; font-family: 'Jost'; font-weight: 150;")
+        button3.setStyleSheet("background-color: #000; color: white; font-size: 25px; font-family: 'Jost'; font-weight: 170;")
         button3.setFixedHeight(36)
         layout.addWidget(button3, alignment=Qt.AlignLeft)
 
@@ -862,10 +862,10 @@ class MainScreen(QMainWindow):
 
         # Buttons
         self.saveButton = QPushButton("GUARDAR")
-        self.saveButton.setStyleSheet("background-color: #000; color: white; margin-left: 20px; font-size: 22px; font-family: 'Jost'; font-weight: 100;")
+        self.saveButton.setStyleSheet("background-color: #000; color: white; margin-left: 25px; font-size: 22px; font-family: 'Jost'; font-weight: 100;")
         self.saveButton.setFixedHeight(40)
         self.tryButton = QPushButton("REINTENTAR")
-        self.tryButton.setStyleSheet("background-color: #000; color: white; font-size: 22px; font-family: 'Jost'; font-weight: 100;")
+        self.tryButton.setStyleSheet("background-color: #000; color: white; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
         self.tryButton.setFixedHeight(40)
         button_layout = QHBoxLayout()
         button_layout.addStretch()
@@ -1026,7 +1026,7 @@ class MainScreen(QMainWindow):
         siguiente_btn.setStyleSheet("""
             background-color: #000;
             color: white;
-            font-size: 19px;
+            font-size: 25px;
             font-family: 'Jost';
             font-weight: 100;
             border: none;
@@ -1058,7 +1058,7 @@ class MainScreen(QMainWindow):
         def reset_emotion_selection():
             self.selected_emotion.clear()
             for btn in self.emotion_buttons:
-                btn.setStyleSheet("color: white; font-size: 25px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+                btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
         fade_widget.visibilityChanged = reset_emotion_selection
     
     def create_cause_emotion_widget(self, next_widget_index):
@@ -1118,7 +1118,7 @@ class MainScreen(QMainWindow):
         guardar_btn.setStyleSheet("""
             background-color: #000;
             color: white;
-            font-size: 19px;
+            font-size: 25px;
             font-family: 'Jost';
             font-weight: 100;
             border: none;
