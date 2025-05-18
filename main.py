@@ -597,7 +597,7 @@ class MainScreen(QMainWindow):
 
         # Fullscreen image (replace 'contacts.png' with your image file)
         image_label = QLabel()
-        image_label.setPixmap(QPixmap("contactos.png").scaled(800, 480, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+        image_label.setPixmap(QPixmap("contactos.png").scaled(800, 440, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
         image_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(image_label)
 
