@@ -520,7 +520,7 @@ class MainScreen(QMainWindow):
 
     def create_widget2(self, next_widget_index1, next_widget_index2, next_widget_index3):
         """
-        Creates the second widget with auto transition after 2000ms.
+        Creates the second widget with three options, each with an orange underline (text-decoration).
         """
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
@@ -539,42 +539,68 @@ class MainScreen(QMainWindow):
         label1.setStyleSheet(f"color: white; font-size: 35px; font-family: 'Jost'; font-weight: 200;")
         layout.addWidget(label1)
 
+        # --- Option 1: ESCANEAR ESTADO EMOCIONAL ---
         button = QPushButton("ESCANEAR ESTADO EMOCIONAL")
-        button.setStyleSheet("background-color: #000; color: white; font-size: 25px; font-family: 'Jost'; font-weight: 170; border-bottom: 10px solid white;")
+        button.setStyleSheet("""
+            QPushButton {
+                background-color: #000;
+                color: white;
+                font-size: 25px;
+                font-family: 'Jost';
+                font-weight: 170;
+                border: none;
+                border-bottom: 3px solid orange;
+                padding-bottom: 2px;
+            }
+            QPushButton:hover {
+                color: orange;
+                text-decoration: underline;
+            }
+        """)
         button.setFixedHeight(36)
         layout.addWidget(button, alignment=Qt.AlignLeft)
-                
-        line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Plain)
-        line.setStyleSheet("background-color: orange;")
-        line.setFixedSize(310, 3)
-        layout.addWidget(line)
 
+        # --- Option 2: VER ESTADÍSTICAS DEL ESTADO EMOCIONAL ---
         button2 = QPushButton("VER ESTADÍSTICAS DEL ESTADO EMOCIONAL")
-        button2.setStyleSheet("background-color: #000; color: white; font-size: 25px; font-family: 'Jost'; font-weight: 170;")
+        button2.setStyleSheet("""
+            QPushButton {
+                background-color: #000;
+                color: white;
+                font-size: 25px;
+                font-family: 'Jost';
+                font-weight: 170;
+                border: none;
+                border-bottom: 3px solid orange;
+                padding-bottom: 2px;
+            }
+            QPushButton:hover {
+                color: orange;
+                text-decoration: underline;
+            }
+        """)
         button2.setFixedHeight(36)
         layout.addWidget(button2, alignment=Qt.AlignLeft)
 
-        line2 = QFrame()
-        line2.setFrameShape(QFrame.HLine)
-        line2.setFrameShadow(QFrame.Plain)
-        line2.setStyleSheet("background-color: orange;")
-        line2.setFixedSize(410, 3)
-        layout.addWidget(line2)
-
-        # --- NEW: Add "VER CONTACTOS" button ---
+        # --- Option 3: VER CONTACTOS ---
         button3 = QPushButton("VER CONTACTOS")
-        button3.setStyleSheet("background-color: #000; color: white; font-size: 25px; font-family: 'Jost'; font-weight: 170;")
+        button3.setStyleSheet("""
+            QPushButton {
+                background-color: #000;
+                color: white;
+                font-size: 25px;
+                font-family: 'Jost';
+                font-weight: 170;
+                border: none;
+                border-bottom: 3px solid orange;
+                padding-bottom: 2px;
+            }
+            QPushButton:hover {
+                color: orange;
+                text-decoration: underline;
+            }
+        """)
         button3.setFixedHeight(36)
         layout.addWidget(button3, alignment=Qt.AlignLeft)
-
-        line3 = QFrame()
-        line3.setFrameShape(QFrame.HLine)
-        line3.setFrameShadow(QFrame.Plain)
-        line3.setStyleSheet("background-color: orange;")
-        line3.setFixedSize(165, 3)
-        layout.addWidget(line3)
 
         fade_widget = FadeWidget(widget)
         self.stack.addWidget(fade_widget)
@@ -785,7 +811,7 @@ class MainScreen(QMainWindow):
         layout = QVBoxLayout(widget)
 
         label = QLabel("ESCANEANDO\nEMOCIONES", alignment=Qt.AlignCenter)
-        label.setStyleSheet("color: white; font-size: 35px; font-family: 'Jost'; font-weight: 200;")
+        label.setStyleSheet("color: white; font-size: 50px; font-family: 'Jost'; font-weight: 200;")
         layout.addWidget(label, alignment=Qt.AlignCenter)
 
         self.countdown_label = QLabel("3", alignment=Qt.AlignCenter)
@@ -1149,7 +1175,7 @@ class MainScreen(QMainWindow):
             self.selected_motives.clear()
             for btn in self.motive_buttons:  
                 btn.setChecked(False)
-                btn.setStyleSheet("color: white; font-size: 25px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
+                btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
         fade_widget.visibilityChanged = reset_motive_selection
     def create_send_to_contacts_widget(self, next_widget_index_si, next_widget_index_no):
         widget = QWidget()
