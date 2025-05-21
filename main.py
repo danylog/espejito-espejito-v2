@@ -298,7 +298,7 @@ class VoronoiWidget(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         
         edge_pen = QPen(QColor(self.r, self.g, self.b))
-        edge_pen.setWidth(1)
+        edge_pen.setWidthF(0.5)
         painter.setPen(edge_pen)
         
         for (x1, y1), (x2, y2) in self.shown_edges:
@@ -549,7 +549,7 @@ class MainScreen(QMainWindow):
                 font-family: 'Jost';
                 font-weight: 170;
                 border: none;
-                border-bottom: 3px solid orange;
+                border-bottom: 1px solid orange;
                 padding-bottom: 5px;
             }
         """)
@@ -567,7 +567,7 @@ class MainScreen(QMainWindow):
                 font-family: 'Jost';
                 font-weight: 170;
                 border: none;
-                border-bottom: 3px solid orange;
+                border-bottom: 1px solid orange;
                 padding-bottom: 5px;
             }
         """)
@@ -585,7 +585,7 @@ class MainScreen(QMainWindow):
                 font-family: 'Jost';
                 font-weight: 170;
                 border: none;
-                border-bottom: 3px solid orange;
+                border-bottom: 1px solid orange;
                 padding-bottom: 5px;
             }
         """)
@@ -633,7 +633,7 @@ class MainScreen(QMainWindow):
                 color: orange;
             }
         """)
-        cross_btn.setFixedSize(48, 48)
+        cross_btn.setFixedSize(40, 40)
         cross_btn.move(740, 10)  # Position at top-right (800-48-12, 10)
         cross_btn.raise_()
         cross_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
@@ -878,10 +878,10 @@ class MainScreen(QMainWindow):
 
         # Buttons
         self.saveButton = QPushButton("GUARDAR")
-        self.saveButton.setStyleSheet("background-color: #000; color: white; margin-left: 25px; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
+        self.saveButton.setStyleSheet("background-color: transparent; color: white; margin-left: 25px; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
         self.saveButton.setFixedHeight(40)
         self.tryButton = QPushButton("REINTENTAR")
-        self.tryButton.setStyleSheet("background-color: #000; color: white; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
+        self.tryButton.setStyleSheet("background-color: transparent; color: white; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
         self.tryButton.setFixedHeight(40)
         button_layout = QHBoxLayout()
         button_layout.addStretch()
@@ -928,11 +928,11 @@ class MainScreen(QMainWindow):
             self.emotion_label.setText(mood)
 
             voronoi_params = {
-                "MUY FELIZ":   {"num_points": 250, "edges_per_tick": 50},
-                "FELIZ":       {"num_points": 200, "edges_per_tick": 40},
+                "MUY FELIZ":   {"num_points": 50, "edges_per_tick": 10},
+                "FELIZ":       {"num_points": 100, "edges_per_tick": 20},
                 "NORMAL":      {"num_points": 150,  "edges_per_tick": 30},
-                "TRISTE":      {"num_points": 100,  "edges_per_tick": 20},
-                "MUY TRISTE":  {"num_points": 50,  "edges_per_tick": 10},
+                "TRISTE":      {"num_points": 200,  "edges_per_tick": 40},
+                "MUY TRISTE":  {"num_points": 250,  "edges_per_tick": 50},
             }
             params = voronoi_params.get(mood, {"num_points": 700, "edges_per_tick": 60})
 
@@ -1020,7 +1020,7 @@ class MainScreen(QMainWindow):
                 btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
             else:
                 self.selected_emotion.add(word)
-                btn.setStyleSheet("color: orange; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none; text-decoration: underline;")
+                btn.setStyleSheet("color: orange; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
 
         for row, row_words in enumerate(emotions):
             for col, word in enumerate(row_words):
@@ -1111,7 +1111,7 @@ class MainScreen(QMainWindow):
                 btn.setStyleSheet("color: white; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
             else:
                 self.selected_motives.add(word)
-                btn.setStyleSheet("color: orange; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none; text-decoration: underline;")
+                btn.setStyleSheet("color: orange; font-size: 20px; font-family: 'Jost'; font-weight: 200; background: transparent; border: none;")
 
         for row, row_words in enumerate(motives):
             for col, word in enumerate(row_words):
@@ -1232,7 +1232,7 @@ class MainScreen(QMainWindow):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(30, 30, 30, 30)
 
         title = QLabel()
         title.setStyleSheet("color: white; margin-left: 20px; font-size: 28px; font-family: 'Jost';")
@@ -1291,64 +1291,39 @@ class MainScreen(QMainWindow):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        # Date at top
-        date_label = QLabel(day_data["date"])
-        date_label.setStyleSheet("color: #888; font-size: 24px; font-family: 'Jost'; font-weight: 200;")
-        layout.addWidget(date_label)
-        layout.addSpacing(10)
+        # Fullscreen image (replace 'info_dia.png' with your image file)
+        image_label = QLabel()
+        image_label.setPixmap(QPixmap("info_dia.png").scaled(800, 440, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation))
+        image_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(image_label)
 
-        for entry in day_data["entries"]:
-            # Time and mood
-            time_label = QLabel(f"{entry['time']} {entry['mood']}")
-            time_label.setStyleSheet("color: white; font-size: 18px; font-family: 'Jost'; font-weight: 200;")
-            layout.addWidget(time_label)
-            # Divider
-            divider = QFrame()
-            divider.setFrameShape(QFrame.HLine)
-            divider.setStyleSheet("background-color: #222;")
-            divider.setFixedHeight(2)
-            layout.addWidget(divider)
-            # Emociones
-            emociones_label = QLabel(f"EMOCIONES: <span style='color:#888'>{' - '.join(entry['emociones'])}</span>")
-            emociones_label.setStyleSheet("color: white; font-size: 16px; font-family: 'Jost'; font-weight: 200;")
-            emociones_label.setTextFormat(Qt.RichText)
-            layout.addWidget(emociones_label)
-            # Motivos
-            motivos_label = QLabel(f"MOTIVOS: <span style='color:#888'>{' - '.join(entry['motivos'])}</span>")
-            motivos_label.setStyleSheet("color: white; font-size: 16px; font-family: 'Jost'; font-weight: 200;")
-            motivos_label.setTextFormat(Qt.RichText)
-            layout.addWidget(motivos_label)
-            layout.addSpacing(10)
-
-        layout.addStretch()
-
-        # Cross button at top right
-        cross_btn = QPushButton("✕")
-        cross_btn.setFixedSize(40, 40)
+        # Cross button (top-right, overlay style)
+        cross_btn = QPushButton("✕", widget)
         cross_btn.setStyleSheet("""
             QPushButton {
                 color: white;
-                font-size: 28px;
-                font-family: 'Jost';
-                background: transparent;
+                background: rgba(0,0,0,0.5);
                 border: none;
+                font-size: 36px;
+                font-family: 'Jost';
+                font-weight: 200;
+                padding: 0 12px;
             }
             QPushButton:hover {
                 color: orange;
             }
         """)
-        cross_layout = QHBoxLayout()
-        cross_layout.addStretch()
-        cross_layout.addWidget(cross_btn)
-        layout.insertLayout(0, cross_layout)
+        cross_btn.setFixedSize(40, 40)
+        cross_btn.move(740, 10)  # Position at top-right (800-48-12, 10)
+        cross_btn.raise_()
+        cross_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
 
         fade_widget = FadeWidget(widget)
         self.stack.addWidget(fade_widget)
         self.fade_widgets.append(fade_widget)
-
-        cross_btn.clicked.connect(lambda: self.fade_to(self.current, next_widget_index))
         return fade_widget
     
     def _start_auto_timer_for_current(self):
