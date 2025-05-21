@@ -24,7 +24,7 @@ import numpy as np
 from scipy.spatial import Voronoi
 from datetime import date, timedelta
 import threading
-
+import random
 import sys
 import os
 
@@ -502,13 +502,22 @@ class MainScreen(QMainWindow):
         """
         Creates the first widget with manual transition via button.
         """
+
+
+        phrases = [
+            "LO QUE SIENTES\nIMPORTA",
+            "ESCÚCHATE,\nCADA DÍA\nCUENTA",
+            "SENTIR\nNO ES MALO,\nES HUMANO",
+            "PARA,\nRESPIRA,\nSIENTE",
+            "APRENDE\nA ENTENDERTE"
+        ]
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(0)
 
-        label = QLabel("LO QUE SIENTES\nIMPORTA", alignment=Qt.AlignCenter)
+        label = QLabel(phrases[random.randint(0,4)], alignment=Qt.AlignCenter)
 
         label.setStyleSheet(f"color: white; font-size: 50px; font-family: '{jostLight}';")
         layout.addWidget(label)
