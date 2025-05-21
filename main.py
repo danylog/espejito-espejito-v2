@@ -1232,7 +1232,7 @@ class MainScreen(QMainWindow):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         title = QLabel()
         title.setStyleSheet("color: white; margin-left: 20px; font-size: 28px; font-family: 'Jost';")
@@ -1245,14 +1245,16 @@ class MainScreen(QMainWindow):
 
         # Cross button at top right
         cross_btn = QPushButton("✕")
-        cross_btn.setFixedSize(40, 40)
+        cross_btn.setFixedSize(48, 48)
         cross_btn.setStyleSheet("""
             QPushButton {
                 color: white;
-                font-size: 28px;
+                font-size: 36px;
                 font-family: 'Jost';
                 background: transparent;
                 border: none;
+                margin-right:30px;
+                margin-top: 20px;
             }
             QPushButton:hover {
                 color: orange;
