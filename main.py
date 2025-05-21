@@ -338,25 +338,30 @@ class FadeWidget(QWidget):
 class MainScreen(QMainWindow):
     def __init__(self):
         super().__init__()
-        from no_graphic import CameraFacialEmotionDetector
-        self.facial_detector = CameraFacialEmotionDetector()
-        self.latest_emotion = None
-        self.latest_mood = None
-        self._scan_thread = None
-        self._scan_running = False
+
+
         self.setWindowTitle("Decentralized Widget Demo")
 
         if ON_RPI:
+            from no_graphic import CameraFacialEmotionDetector
+            self.facial_detector = CameraFacialEmotionDetector()
+            self.latest_emotion = None
+            self.latest_mood = None
             self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
             self.showFullScreen()
             self.setCursor(Qt.BlankCursor)
             QApplication.setOverrideCursor(Qt.BlankCursor)
         else:
+            from internet_fer import CameraFacialEmotionDetector
+            self.facial_detector = CameraFacialEmotionDetector()
+            self.latest_emotion = None
+            self.latest_mood = None
             self.resize(800, 480)  # Or any size you prefer for Mac
             self.setWindowFlags(Qt.Window)
             self.setCursor(Qt.ArrowCursor)
             QApplication.setOverrideCursor(Qt.ArrowCursor)
-
+        self._scan_thread = None
+        self._scan_running = False
         self.black_overlay = QWidget(self)
         self.black_overlay.setStyleSheet("background-color: black;")
         self.black_overlay.hide()

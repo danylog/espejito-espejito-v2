@@ -5,15 +5,18 @@ import time
 from datetime import datetime
 from typing import List, Dict
 
-from tensorflow.keras.models import load_model
+import tflite_runtime.interpreter as tflite
 
 class CameraFacialEmotionDetector:
-    MODEL_PATH = "emotion_model.hdf5"  # <-- your .h5 Keras model here
+    MODEL_PATH = "model.tflite"  # <-- your .tflite here
     FACE_SIZE = (64, 64)
 
     def __init__(self):
-        print("[DEBUG] Loading emotion Keras model from:", self.MODEL_PATH)
-        self.model = load_model(self.MODEL_PATH, compile=False)
+        print("[DEBUG] Loading emotion TFLite model from:", self.MODEL_PATH)
+        self.interpreter = tflite.Interpreter(model_path=self.MODEL_PATH)
+        self.interpreter.allocate_tensors()
+        self.input_details = self.interpreter.get_input_details()
+        self.output_details = self.interpreter.get_output_details()
         print("[DEBUG] Loading Haar cascade for face detection...")
         haar_path = (
             "/home/pi/haarcascade_frontalface_default.xml"
@@ -36,7 +39,10 @@ class CameraFacialEmotionDetector:
         normalized = resized.astype("float32") / 255.0
         reshaped = np.reshape(normalized, (1, 64, 64, 1))
 
-        preds = self.model.predict(reshaped, verbose=0)[0]  # FER2013: [Angry, Disgust, Fear, Happy, Sad, Surprise, Neutral]
+        # Set tensor
+        self.interpreter.set_tensor(self.input_details[0]['index'], reshaped.astype(self.input_details[0]['dtype']))
+        self.interpreter.invoke()
+        preds = self.interpreter.get_tensor(self.output_details[0]['index'])[0]  # FER2013: [Angry, Disgust, Fear, Happy, Sad, Surprise, Neutral]
 
         happy = preds[3]
         normal = preds[6]
@@ -64,7 +70,7 @@ class CameraFacialEmotionDetector:
             return "MUY TRISTE"
         else:
             return "NORMAL"
-
+        
     def analyze_camera_feed(self):
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
