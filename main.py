@@ -61,8 +61,8 @@ class StatisticsChart(QWidget):
     day_clicked = pyqtSignal(int)  # index in self.data
     def __init__(self, parent=None, start_date=None, title_label=None):
         super().__init__(parent)
-        self.setMinimumSize(800, 320)
-        self.setMaximumSize(800, 320)
+        self.setMinimumSize(800, 400)
+        self.setMaximumSize(800, 400)
         self.setStyleSheet("background: transparent;")
         # Use float values for more precise mood positions
         self.data = [
@@ -100,20 +100,20 @@ class StatisticsChart(QWidget):
         dot_brush = orange
 
         # Margins
-        left = 60
+        left = 40
         right = 20
-        top = 30
-        bottom = 60
+        top = 10
+        bottom = 90
 
         # Draw horizontal grid lines and labels
         levels = ["MUY BIEN", "BIEN", "NORMAL", "MAL", "MUY MAL"]
         for i, label in enumerate(levels):
             y = top + i * (h - top - bottom) / 4
             painter.setPen(QPen(QColor(180, 120, 80, 100), 1))
-            painter.drawLine(left, int(y), w - right, int(y))
+            painter.drawLine(10, int(y), w - right, int(y))
             painter.setPen(QColor(180, 180, 180) if i in [0, 4] else QColor(255, 255, 255))
-            painter.setFont(QFont("Jost", 14))
-            painter.drawText(10, int(y) + 6, label)
+            painter.setFont(QFont("Jost", 20))
+            painter.drawText(10, int(y) + 16, label)
 
         # Draw line and dots for visible window
         points = []
@@ -136,11 +136,11 @@ class StatisticsChart(QWidget):
         painter.setFont(QFont("Jost", 18))
         for i, day in enumerate(days):
             x = left + i * (w - left - right) / (self.window_size - 1)
-            painter.drawText(int(x) - 16, h - 100, 32, 40, Qt.AlignCenter, day)
+            painter.drawText(int(x) - 16, h - 65, 32, 40, Qt.AlignCenter, day)
 
         # Draw navigation dots (and store clickable areas)
         self.dot_rects = []
-        dot_y = h - 40
+        dot_y = h - 20
         dot_x0 = w // 2 - (self.num_windows * 15)
         for i in range(self.num_windows):
             rect = QRect(dot_x0 + i * 30, dot_y, 10, 10)
@@ -1239,16 +1239,17 @@ class MainScreen(QMainWindow):
         layout = QVBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        # --- Top bar with title and cross ---
+        top_bar = QHBoxLayout()
+        top_bar.setContentsMargins(0, 0, 0, 0)
+        top_bar.setSpacing(0)
+
         title = QLabel()
-        title.setStyleSheet("color: white; margin-left: 20px; font-size: 28px; font-family: 'Jost';")
-        title.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        layout.addWidget(title)
-        layout.addSpacing(10)
+        title.setStyleSheet("color: white; margin-left: 10px; font-size: 28px; font-family: 'Jost';")
+        title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        top_bar.addWidget(title)
+        top_bar.addStretch()
 
-        chart = StatisticsChart(title_label=title, start_date=date(2024, 4, 1))
-        layout.addWidget(chart)
-
-        # Cross button at top right
         cross_btn = QPushButton("✕")
         cross_btn.setFixedSize(48, 48)
         cross_btn.setStyleSheet("""
@@ -1259,16 +1260,19 @@ class MainScreen(QMainWindow):
                 background: transparent;
                 border: none;
                 margin-right:30px;
-                margin-top: 20px;
+                margin-top: 0px;
             }
             QPushButton:hover {
                 color: orange;
             }
         """)
-        cross_layout = QHBoxLayout()
-        cross_layout.addStretch()
-        cross_layout.addWidget(cross_btn)
-        layout.insertLayout(0, cross_layout)
+        top_bar.addWidget(cross_btn)
+
+        layout.addLayout(top_bar)
+        layout.addSpacing(10)
+
+        chart = StatisticsChart(title_label=title, start_date=date(2024, 4, 1))
+        layout.addWidget(chart)
 
         fade_widget = FadeWidget(widget)
         self.stack.addWidget(fade_widget)
