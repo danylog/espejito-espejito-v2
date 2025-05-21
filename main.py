@@ -140,10 +140,10 @@ class StatisticsChart(QWidget):
 
         # Draw navigation dots (and store clickable areas)
         self.dot_rects = []
-        dot_y = h - 50
+        dot_y = h - 40
         dot_x0 = w // 2 - (self.num_windows * 15)
         for i in range(self.num_windows):
-            rect = QRect(dot_x0 + i * 30, dot_y, 16, 16)
+            rect = QRect(dot_x0 + i * 30, dot_y, 10, 10)
             self.dot_rects.append(rect)
             if i == self.window_start // self.window_size:
                 painter.setBrush(QColor(255, 255, 255))
