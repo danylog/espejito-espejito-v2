@@ -420,6 +420,25 @@ class MainScreen(QMainWindow):
     # def resizeEvent(self, event):
     #     super().resizeEvent(event)
     #     self.black_overlay.setGeometry(0, 0, self.width(), self.height())
+        self._long_press_timer = QTimer(self)
+        self._long_press_timer.setSingleShot(True)
+        self._long_press_timer.timeout.connect(self.on_long_press)
+        self._long_press_threshold = 5000  # milliseconds
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._long_press_timer.start(self._long_press_threshold)
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self._long_press_timer.stop()
+        super().mouseReleaseEvent(event)
+
+    def on_long_press(self):
+        print("Long press detected on main window!")
+        os._exit(0)
+        # You can trigger any action here, e.g.:
+        # self.fade_to(self.current, 0)  # Go to first widget, etc.
     def _check_gpio_input(self):
         if ON_RPI:
             if pi.read(GPIO_INPUT_PIN) == 0:
@@ -502,6 +521,8 @@ class MainScreen(QMainWindow):
         fade_widget.next_widget_index = next_widget_index
 
     def create_widget1(self, next_widget_index):
+        # Add these to your widget class
+
         phrases = [
             "LO QUE SIENTES\nIMPORTA",
             "ESCÚCHATE,\nCADA DÍA\nCUENTA",
@@ -533,6 +554,7 @@ class MainScreen(QMainWindow):
         fade_widget.duration = 2000  # Auto transition after 2 seconds
         fade_widget.next_widget_index = next_widget_index
     def create_widget2(self, next_widget_index1, next_widget_index2, next_widget_index3):
+        
         """
         Creates the second widget with three options, each with an orange underline (text-decoration).
         """
