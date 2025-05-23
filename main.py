@@ -438,6 +438,8 @@ class MainScreen(QMainWindow):
     def reset_program(self):
         # Reset to the first screen
         self.current = 0
+        self.phraseIndex = random.randint(0,4)
+
         self.stack.setCurrentWidget(self.fade_widgets[0])
         self.fade_widgets[0].set_opacity(1)
         self._start_auto_timer_for_current()
@@ -500,11 +502,6 @@ class MainScreen(QMainWindow):
         fade_widget.next_widget_index = next_widget_index
 
     def create_widget1(self, next_widget_index):
-        """
-        Creates the first widget with manual transition via button.
-        """
-
-
         phrases = [
             "LO QUE SIENTES\nIMPORTA",
             "ESCÚCHATE,\nCADA DÍA\nCUENTA",
@@ -518,21 +515,23 @@ class MainScreen(QMainWindow):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(0)
 
-        label = QLabel(phrases[self.phraseIndex], alignment=Qt.AlignCenter)
-
-        label.setStyleSheet(f"color: white; font-size: 50px; font-family: '{jostLight}';")
-        layout.addWidget(label)
+        # Store label as instance variable
+        self.widget1_label = QLabel("", alignment=Qt.AlignCenter)
+        self.widget1_label.setStyleSheet(f"color: white; font-size: 50px; font-family: '{jostLight}';")
+        layout.addWidget(self.widget1_label)
 
         fade_widget = FadeWidget(widget)
         self.stack.addWidget(fade_widget)
         self.fade_widgets.append(fade_widget)
 
-        # Connect button for manual transition
-        # Store transition behavior
-        fade_widget.auto = True
-        fade_widget.duration = 2000  # Auto transition after 3 seconds
-        fade_widget.next_widget_index = next_widget_index
+        # Set a new random phrase every time the widget is shown
+        def set_random_phrase():
+            self.widget1_label.setText(random.choice(phrases))
+        fade_widget.visibilityChanged = set_random_phrase
 
+        fade_widget.auto = True
+        fade_widget.duration = 2000  # Auto transition after 2 seconds
+        fade_widget.next_widget_index = next_widget_index
     def create_widget2(self, next_widget_index1, next_widget_index2, next_widget_index3):
         """
         Creates the second widget with three options, each with an orange underline (text-decoration).
