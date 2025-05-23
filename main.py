@@ -892,10 +892,10 @@ class MainScreen(QMainWindow):
 
         # Buttons
         self.saveButton = QPushButton("GUARDAR")
-        self.saveButton.setStyleSheet("background-color: transparent; color: white; margin-left: 25px; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
+        self.saveButton.setStyleSheet("color: white; margin-left: 25px; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
         self.saveButton.setFixedHeight(40)
         self.tryButton = QPushButton("REINTENTAR")
-        self.tryButton.setStyleSheet("background-color: transparent; color: white; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
+        self.tryButton.setStyleSheet("color: white; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
         self.tryButton.setFixedHeight(40)
         button_layout = QHBoxLayout()
         button_layout.addStretch()
