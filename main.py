@@ -369,7 +369,7 @@ class MainScreen(QMainWindow):
         self.black_overlay.setAttribute(Qt.WA_TransparentForMouseEvents, True)
 
         self.current = 0  # Start with the first widget
-
+        self.phraseIndex = random.randint(0,4)
         main_widget = QWidget()
         main_widget.setStyleSheet("background-color: #000000;")
         self.setCentralWidget(main_widget)
@@ -432,6 +432,7 @@ class MainScreen(QMainWindow):
             else:
                 print("[DEBUG] GPIO input not detected, hiding black overlay.")
                 if self.black_overlay.isVisible():
+                    self.phraseIndex = random.randint(0,4)
                     self.black_overlay.hide()
                     self.reset_program()
     def reset_program(self):
@@ -517,7 +518,7 @@ class MainScreen(QMainWindow):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(0)
 
-        label = QLabel(phrases[random.randint(0,4)], alignment=Qt.AlignCenter)
+        label = QLabel(phrases[self.phraseIndex], alignment=Qt.AlignCenter)
 
         label.setStyleSheet(f"color: white; font-size: 50px; font-family: '{jostLight}';")
         layout.addWidget(label)
@@ -856,7 +857,6 @@ class MainScreen(QMainWindow):
             if hasattr(fw, "set_emotion"):
                 fw.set_emotion(self.latest_mood if self.latest_mood else fallback)
         self.fade_to(self.current, next_widget_index)
-
     def create_deteced_emotion_widget(self, next_widget_index1, next_widget_index2):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
@@ -877,11 +877,19 @@ class MainScreen(QMainWindow):
         text_layout = QVBoxLayout(self.text_container)
         text_layout.setContentsMargins(30, 30, 30, 30)
 
-        # Title label
+        # --- Top bar with title and clickable labels ---
+        top_bar = QHBoxLayout()
+        top_bar.setContentsMargins(0, 0, 0, 0)
+        top_bar.setSpacing(0)
+
         title_label = QLabel("ESTADO DE ÁNIMO\nDETECTADO:")
         title_label.setStyleSheet("color: white; font-size: 40px; font-family: 'Jost'; font-weight: 200; background: transparent;")
         title_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        text_layout.addWidget(title_label)
+        top_bar.addWidget(title_label)
+        top_bar.addStretch()
+
+
+        text_layout.addLayout(top_bar)
 
         # Emotion label
         self.emotion_label = QLabel()
@@ -889,44 +897,42 @@ class MainScreen(QMainWindow):
         self.emotion_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         text_layout.addWidget(self.emotion_label)
         text_layout.addStretch()
+        text_layout.addStretch()
 
-        # Buttons
-        self.saveButton = QPushButton("GUARDAR")
-        self.saveButton.setStyleSheet("color: white; margin-left: 25px; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
-        self.saveButton.setFixedHeight(40)
-        self.tryButton = QPushButton("REINTENTAR")
-        self.tryButton.setStyleSheet("color: white; font-size: 25px; font-family: 'Jost'; font-weight: 100;")
-        self.tryButton.setFixedHeight(40)
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(self.tryButton)
-        guardar_container = QVBoxLayout()
-        guardar_container.setSpacing(0)
-        guardar_container.setContentsMargins(0, 0, 0, 0)
-        guardar_container.addWidget(self.saveButton)
-        guardar_underline = QFrame()
-        guardar_underline.setFrameShape(QFrame.HLine)
-        guardar_underline.setFrameShadow(QFrame.Plain)
-        guardar_underline.setStyleSheet("background-color: orange; margin-left: 20px;")
-        guardar_underline.setFixedHeight(3)
-        guardar_container.addWidget(guardar_underline)
-        reintentar_container = QVBoxLayout()
-        reintentar_container.setSpacing(0)
-        reintentar_container.setContentsMargins(0, 0, 0, 0)
-        reintentar_container.addWidget(self.tryButton)
-        reintentar_underline = QFrame()
-        reintentar_underline.setFrameShape(QFrame.HLine)
-        reintentar_underline.setFrameShadow(QFrame.Plain)
-        reintentar_underline.setStyleSheet("background-color: orange;")
-        reintentar_underline.setFixedHeight(3)
-        reintentar_container.addWidget(reintentar_underline)
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addLayout(reintentar_container)
-        button_layout.addSpacing(20)
-        button_layout.addLayout(guardar_container)
-        text_layout.addLayout(button_layout)
+        # --- Bottom bar with clickable labels ---
+        bottom_bar = QHBoxLayout()
+        bottom_bar.addStretch()
 
+        guardar_label = QLabel("GUARDAR")
+        guardar_label.setStyleSheet("""
+            color: white;
+            font-size: 25px;
+            font-family: 'Jost';
+            font-weight: 100;
+            padding: 4px 5px;
+            background: transparent;
+            border-bottom: 3px solid orange;
+            margin-right: 20px;
+        """)
+        #guardar_label.setCursor(Qt.PointingHandCursor)
+        guardar_label.mousePressEvent = lambda event: self.fade_to(self.current, next_widget_index1)
+        bottom_bar.addWidget(guardar_label)
+
+        reintentar_label = QLabel("REINTENTAR")
+        reintentar_label.setStyleSheet("""
+            color: white;
+            font-size: 25px;
+            font-family: 'Jost';
+            font-weight: 100;
+            padding: 4px 5px;
+            background: transparent;
+            border-bottom: 3px solid orange;
+        """)
+        #reintentar_label.setCursor(Qt.PointingHandCursor)
+        reintentar_label.mousePressEvent = lambda event: self.fade_to(self.current, next_widget_index2)
+        bottom_bar.addWidget(reintentar_label)
+
+        text_layout.addLayout(bottom_bar)
         # Voronoi rendering logic
         def update_voronoi():
             pixmap = QPixmap(self.voronoi_label.size())
@@ -991,11 +997,8 @@ class MainScreen(QMainWindow):
 
         fade_widget.auto = False
         fade_widget.duration = 0
-        self.saveButton.clicked.connect(lambda: self.fade_to(self.current, next_widget_index1))
-        self.tryButton.clicked.connect(lambda: self.fade_to(self.current, next_widget_index2))
 
         return fade_widget
-
     def create_describe_emotion_widget(self, next_widget_index):
         widget = QWidget()
         widget.setStyleSheet("background-color: #000000;")
