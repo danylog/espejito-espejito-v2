@@ -54,13 +54,13 @@ class CameraFacialEmotionDetector:
 
     def classify_mood(self, happy, normal, sad) -> str:
         # New thresholds based on your provided values
-        if happy >= 0.55:
+        if happy >= 0.8:
             return "MUY FELIZ"
         elif happy >= 0.12 and sad < 0.4:
             return "FELIZ"
-        elif happy < 0.05 and sad > 0.6:
+        elif happy < 0.05 and (0.6 > sad >= 0.4):
             return "TRISTE"
-        elif happy < 0.05 and sad > 0.5:
+        elif happy < 0.05 and sad > 0.6:
             return "MUY TRISTE"
         else:
             return "NORMAL"
