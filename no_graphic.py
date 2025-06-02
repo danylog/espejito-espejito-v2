@@ -62,15 +62,14 @@ class CameraFacialEmotionDetector:
         # New thresholds based on your provided values
         if happy >= 0.8:
             return "MUY FELIZ"
-        elif happy >= 0.2 and sad < 0.4:
+        elif happy >= 0.12 and sad < 0.4:
             return "FELIZ"
-        elif happy < 0.05 and (0.6 > sad >= 0.5):
+        elif happy < 0.05 and (0.8 > sad >= 0.55):
             return "TRISTE"
-        elif happy < 0.05 and sad >= 0.6:
+        elif happy < 0.05 and sad >= 0.8:
             return "MUY TRISTE"
         else:
             return "NORMAL"
-        
     def analyze_camera_feed(self):
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
