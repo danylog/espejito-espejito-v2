@@ -58,9 +58,9 @@ class CameraFacialEmotionDetector:
             return "MUY FELIZ"
         elif happy >= 0.12 and sad < 0.4:
             return "FELIZ"
-        elif happy < 0.05 and (0.8 > sad >= 0.55):
+        elif happy < 0.05 and (0.75 > sad >= 0.55):
             return "TRISTE"
-        elif happy < 0.05 and sad >= 0.8:
+        elif happy < 0.05 and sad >= 0.75:
             return "MUY TRISTE"
         else:
             return "NORMAL"
